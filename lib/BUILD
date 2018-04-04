@@ -1,5 +1,5 @@
 cc_library(
-    name = "ingest-server",
+    name = "lib",
     srcs = glob(["*.cpp"]),
     hdrs = glob(["*.hpp"]),
     visibility = ["//main:__pkg__"],

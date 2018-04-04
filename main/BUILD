@@ -1,7 +1,7 @@
 cc_binary(
     name = "ingest-server",
-    srcs = ["main.cpp"],
+    srcs = ["ingest_server.cpp"],
     deps = [
-        "//lib:ingest-server",
+        "//lib",
     ],
 )

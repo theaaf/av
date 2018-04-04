@@ -2,7 +2,7 @@
 #include <csignal>
 #include <thread>
 
-#include "lib/server.hpp"
+#include "lib/ingest_server.hpp"
 
 namespace {
     volatile std::sig_atomic_t gSignal = 0;
@@ -15,7 +15,7 @@ void signalHandler(int signal) {
 int main(int argc, const char* argv[]) {
     std::signal(SIGINT, signalHandler);
 
-    Server s;
+    IngestServer s;
     s.start();
 
     while (gSignal != SIGINT) {
