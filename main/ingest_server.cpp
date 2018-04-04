@@ -15,7 +15,7 @@ void signalHandler(int signal) {
 int main(int argc, const char* argv[]) {
     std::signal(SIGINT, signalHandler);
 
-    IngestServer s;
+    IngestServer s{IngestServer::Config{}};
     s.start();
 
     while (gSignal != SIGINT) {

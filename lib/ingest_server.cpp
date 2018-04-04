@@ -1,9 +1,14 @@
 #include "lib/ingest_server.hpp"
 
 void IngestServer::start() {
-    // TODO
+    _result = std::async(std::launch::async, [this]{
+        _run();
+    });
 }
 
 void IngestServer::stop() {
-    // TODO
+    _result.wait();
+}
+
+void IngestServer::_run() {
 }
