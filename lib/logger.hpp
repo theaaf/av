@@ -8,6 +8,14 @@
 
 class Logger {
 public:
+    enum class Destination {
+        Console,
+        Void,
+    };
+
+    Logger() = default;
+    explicit Logger(Destination destination) : _destination{destination} {}
+
     template <typename... Args>
     void error(Args&&... args) const {
         return _log("\033[1;31mERROR\033[0m", std::forward<Args>(args)...);
@@ -32,7 +40,11 @@ public:
         return ret.with(std::forward<Rem>(rem)...);
     }
 
+    static const Logger Void;
+
 private:
+    Destination _destination = Destination::Console;;
+
     struct Field {
         std::string name;
         std::string formattedValue;
@@ -41,6 +53,9 @@ private:
 
     template <typename... Args>
     void _log(const char* level, Args&&... args) const {
+        if (_destination == Destination::Void) {
+            return;
+        }
         auto message = fmt::format(std::forward<Args>(args)...);
         std::string fields;
         for (auto& f : _fields) {

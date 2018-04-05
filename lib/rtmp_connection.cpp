@@ -1,6 +1,7 @@
 #include "rtmp_connection.hpp"
 
 #include "librtmp/log.h"
+#include "mpeg4.hpp"
 
 #define STR2AVAL(av, str) av.av_val = const_cast<char*>(str); av.av_len = strlen(av.av_val)
 #define SAVCX(name, x) static const AVal name = {const_cast<char*>(x), sizeof(x)-1}
@@ -168,6 +169,9 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
         AMFProp_GetString(AMF_GetProp(&obj, nullptr, 3), &name);
         AMFProp_GetString(AMF_GetProp(&obj, nullptr, 4), &type);
         _logger.with("name", name, "type", type).info("received publish");
+        if (!_avReceiver) {
+            _avReceiver = _delegate->allocateAVReceiver();
+        }
         return _sendOnStatus(rtmp, packet->m_nInfoField2, &av_NetStream_Publish_Start, &av_started_publishing);
     } else {
         _logger.warn("unknown invoke method: {}", method);
@@ -186,10 +190,43 @@ bool RTMPConnection::_servePacket(RTMP* rtmp, RTMPPacket* packet) {
     case RTMP_PACKET_TYPE_INVOKE:
         return _serveInvoke(rtmp, packet, packet->m_body, packet->m_nBodySize);
     case RTMP_PACKET_TYPE_AUDIO:
-        _logger.info("received audio (len = {})", packet->m_nBodySize);
+        if (!_avReceiver || packet->m_nBodySize < 2 || static_cast<uint8_t>(packet->m_body[0]) != 0xaf) {
+            _logger.error("invalid audio packet");
+            return false;
+        } else if (packet->m_body[1] == 0) {
+            MPEG4AudioSpecificConfig config;
+            if (!config.decode(packet->m_body + 2, packet->m_nBodySize - 2)) {
+                _logger.error("unable to decode audio config");
+                return false;
+            }
+            _logger.with(
+                "object_type", config.objectType,
+                "frequency", config.frequency,
+                "channel_configuration", config.channelConfiguration
+            ).info("received audio config");
+            _avReceiver->receiveEncodedAudioConfig(packet->m_body + 2, packet->m_nBodySize - 2);
+        } else if (packet->m_body[1] == 1) {
+            _avReceiver->receiveEncodedAudio(packet->m_body + 2, packet->m_nBodySize - 2);
+        }
         return true;
     case RTMP_PACKET_TYPE_VIDEO:
-        _logger.info("received video (len = {})", packet->m_nBodySize);
+        if (!_avReceiver || packet->m_nBodySize < 5 || (packet->m_body[0] & 0x0f) != 0x07) {
+            _logger.error("invalid video packet");
+            return false;
+        } else if (packet->m_body[1] == 0) {
+            AVCDecoderConfigurationRecord config;
+            if (!config.decode(packet->m_body + 5, packet->m_nBodySize - 5)) {
+                _logger.error("unable to decode video config");
+                return false;
+            }
+            _logger.with(
+                "profile", config.avcProfileIndication,
+                "level", config.avcLevelIndication
+            ).info("received video config");
+            _avReceiver->receiveEncodedVideoConfig(packet->m_body + 5, packet->m_nBodySize - 5);
+        } else if (packet->m_body[1] == 1) {
+            _avReceiver->receiveEncodedVideo(packet->m_body + 5, packet->m_nBodySize - 5);
+        }
         return true;
     default:
         _logger.warn("received unknown rtmp packet type {}", packet->m_packetType);

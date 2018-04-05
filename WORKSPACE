@@ -15,6 +15,7 @@ cc_library(
 )
 """,
 )
+
 new_http_archive(
     name = "asio",
     urls = ["https://sourceforge.net/projects/asio/files/asio/1.10.6%20%28Stable%29/asio-1.10.6.tar.gz"],
@@ -30,6 +31,7 @@ cc_library(
 )
 """,
 )
+
 new_http_archive(
     name = "fmt",
     urls = ["https://github.com/fmtlib/fmt/archive/4.1.0.tar.gz"],
@@ -44,4 +46,11 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 """,
+)
+
+http_archive(
+    name = "com_google_googletest",
+    url = "https://github.com/google/googletest/archive/82febb8eafc0425601b0d46567dc66c7750233ff.tar.gz",
+    sha256 = "306bfa9e5849804ae4a8b4046417412b97f79d9cd67740ba3adf7a0f985260ce",
+    strip_prefix = "googletest-82febb8eafc0425601b0d46567dc66c7750233ff",
 )
