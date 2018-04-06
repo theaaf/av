@@ -1,6 +1,6 @@
 cc_library(
     name = "lib",
-    deps = ["@asio//:asio", "@fmt//:fmt", "@rtmpdump//:librtmp"],
+    deps = ["@asio//:asio", "@fmt//:fmt", "@rtmpdump//:librtmp", "@aws//:aws"],
     srcs = glob(["**/*.cpp"], exclude=["**/*_test.cpp"]),
     hdrs = glob(["**/*.hpp"]),
     visibility = ["//main:__pkg__"],

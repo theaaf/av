@@ -9,30 +9,20 @@
 
 #include "logger.hpp"
 
-/**
-* Implements a TCP server. ConnectionClass should be a class with a run(int,
-* asio::ip::tcp::endpoint) method, to be invoked from a new thread, and a cancel() method to cause
-* the run() invocation to return early. The Args parameter represents the types of the arguments to
-* be passed to new ConnectionClass instances.
-*/
+// ConnectionClass should be a class with a run(int, asio::ip::tcp::endpoint) method, to be invoked
+// from a new thread, and a cancel() method to cause the run() invocation to return early. The Args
+// parameter represents the types of the arguments to be passed to new ConnectionClass instances.
 template <typename ConnectionClass, typename... Args>
 class TCPServer {
 public:
-    /**
-    * Constructs a new server. Any arguments passed to the constructor will be copied and
-    * passed to each connection class constructor (including the logger).
-    */
+    // Any arguments passed to the constructor will be copied and passed to each connection class
+    // constructor (including the logger).
     TCPServer(Logger logger, const Args&... args) : _logger{logger}, _args(args...), _acceptor(_service), _socket(_service) {}
     TCPServer(const TCPServer& other) = delete;
     TCPServer& operator=(const TCPServer& other) = delete;
     ~TCPServer() { _stop(); }
 
-    /**
-    * Starts the server on the specified address and port.
-    *
-    * @param address the address to start the server on
-    * @param port the port to start the server on
-    */
+    // Starts the server on the specified address and port.
     bool start(asio::ip::address address, uint16_t port) {
         std::unique_lock<std::mutex> lock(_startStopMutex);
         _stop();
@@ -87,9 +77,7 @@ public:
         return true;
     }
 
-    /**
-    * Stops the server.
-    */
+    // Stops the server.
     void stop() {
         std::lock_guard<std::mutex> lock(_startStopMutex);
         _stop();

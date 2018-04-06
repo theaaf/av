@@ -54,3 +54,69 @@ http_archive(
     sha256 = "306bfa9e5849804ae4a8b4046417412b97f79d9cd67740ba3adf7a0f985260ce",
     strip_prefix = "googletest-82febb8eafc0425601b0d46567dc66c7750233ff",
 )
+
+new_http_archive(
+    name = "aws",
+    urls = ["https://github.com/aws/aws-sdk-cpp/archive/1.4.30.tar.gz"],
+    sha256 = "54097ad7ece5e87f628864dd33d1760b0a4d0a4920b1f431871c7a6d6b8dd8ca",
+    strip_prefix = "aws-sdk-cpp-1.4.30",
+    build_file_content = """
+load("@//:build.bzl", "template_rule")
+
+cc_library(
+    name = "aws",
+    srcs = glob([
+        "aws-cpp-sdk-core/include/**/*.h",
+        "aws-cpp-sdk-core/source/*.cpp",
+        "aws-cpp-sdk-core/source/auth/**/*.cpp",
+        "aws-cpp-sdk-core/source/config/**/*.cpp",
+        "aws-cpp-sdk-core/source/client/**/*.cpp",
+        "aws-cpp-sdk-core/source/external/**/*.cpp",
+        "aws-cpp-sdk-core/source/internal/**/*.cpp",
+        "aws-cpp-sdk-core/source/http/*.cpp",
+        "aws-cpp-sdk-core/source/http/curl/**/*.cpp",
+        "aws-cpp-sdk-core/source/http/standard/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/*.cpp",
+        "aws-cpp-sdk-core/source/utils/base64/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/json/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/logging/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/memory/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/stream/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/threading/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/xml/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/crypto/*.cpp",
+        "aws-cpp-sdk-core/source/utils/crypto/commoncrypto/**/*.cpp",
+        "aws-cpp-sdk-core/source/utils/crypto/factory/**/*.cpp",
+        "aws-cpp-sdk-core/source/platform/linux-shared/*.cpp",
+        "aws-cpp-sdk-s3/include/**/*.h",
+        "aws-cpp-sdk-s3/source/**/*.cpp",
+    ]),
+    hdrs = [
+        "aws-cpp-sdk-core/include/aws/core/SDKConfig.h",
+    ],
+    defines = [
+        "ENABLE_CURL_CLIENT",
+        "ENABLE_COMMONCRYPTO_ENCRYPTION",
+        "AWS_SDK_VERSION_MAJOR=1",
+        "AWS_SDK_VERSION_MINOR=4",
+        "AWS_SDK_VERSION_PATCH=30",
+    ],
+    includes = [
+        "aws-cpp-sdk-core/include",
+        "aws-cpp-sdk-s3/include/",
+    ],
+    linkopts = ["-lcurl"],
+    visibility = ["//visibility:public"],
+)
+
+template_rule(
+    name = "SDKConfig_h",
+    src = "aws-cpp-sdk-core/include/aws/core/SDKConfig.h.in",
+    out = "aws-cpp-sdk-core/include/aws/core/SDKConfig.h",
+    substitutions = {
+        "cmakedefine": "define",
+    },
+)
+""",
+)
+

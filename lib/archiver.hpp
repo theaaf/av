@@ -1,12 +1,22 @@
 #pragma once
 
+#include <thread>
+#include <vector>
+
 #include "encoded_av_receiver.hpp"
 #include "logger.hpp"
 
+enum class ArchiveDataType : uint8_t {
+    AudioConfig,
+    Audio,
+    VideoConfig,
+    Video,
+};
+
 class Archiver : public EncodedAVReceiver {
 public:
-    explicit Archiver(Logger logger) : _logger{logger} {}
-    virtual ~Archiver() {}
+    explicit Archiver(Logger logger);
+    virtual ~Archiver();
 
     virtual void receiveEncodedAudioConfig(const void* data, size_t len) override;
     virtual void receiveEncodedAudio(const void* data, size_t len) override;
@@ -15,4 +25,12 @@ public:
 
 private:
     const Logger _logger;
+    std::thread _thread;
+    std::mutex _mutex;
+    std::condition_variable _cv;
+    std::vector<uint8_t> _buffer;
+    bool _isDestructing = false;
+
+    void _run();
+    void _write(ArchiveDataType type, const void* data, size_t len);
 };

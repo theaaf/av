@@ -2,6 +2,7 @@
 
 #include "mpeg4.hpp"
 
+// Simultaneous calls to EncodedAudioReceiver's methods are not allowed.
 struct EncodedAudioReceiver {
     virtual ~EncodedAudioReceiver() {}
 
@@ -12,6 +13,7 @@ struct EncodedAudioReceiver {
     virtual void receiveEncodedAudio(const void* data, size_t len) = 0;
 };
 
+// Simultaneous calls to EncodedVideoReceiver's methods are not allowed.
 struct EncodedVideoReceiver {
     virtual ~EncodedVideoReceiver() {}
 

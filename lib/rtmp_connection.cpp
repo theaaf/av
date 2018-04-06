@@ -155,6 +155,10 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
                 rtmp->m_fEncoding = number;
             }
         }
+
+        if (!_avReceiver) {
+            _avReceiver = _delegate->allocateAVReceiver();
+        }
         return _sendConnectResult(rtmp, txn);
     } else if (AVMATCH(&method, &av_createStream)) {
         return _sendResultNumber(rtmp, txn, _nextStreamId++);
@@ -169,9 +173,6 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
         AMFProp_GetString(AMF_GetProp(&obj, nullptr, 3), &name);
         AMFProp_GetString(AMF_GetProp(&obj, nullptr, 4), &type);
         _logger.with("name", name, "type", type).info("received publish");
-        if (!_avReceiver) {
-            _avReceiver = _delegate->allocateAVReceiver();
-        }
         return _sendOnStatus(rtmp, packet->m_nInfoField2, &av_NetStream_Publish_Start, &av_started_publishing);
     } else {
         _logger.warn("unknown invoke method: {}", method);
