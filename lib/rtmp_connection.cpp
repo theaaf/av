@@ -1,5 +1,8 @@
 #include "rtmp_connection.hpp"
 
+#include <aws/core/utils/UUID.h>
+
+#include "init.hpp"
 #include "librtmp/log.h"
 #include "mpeg4.hpp"
 
@@ -69,8 +72,12 @@ struct RTMPLogger {
 } _rtmpLogger;
 
 void RTMPConnection::run(int fd, asio::ip::tcp::endpoint remote) {
-    _logger = _logger.with("remote", remote);
-    _logger.info("received rtmp connection");
+    InitAWS();
+    _connectionId = Aws::String(Aws::Utils::UUID::RandomUUID());
+    std::transform(_connectionId.begin(), _connectionId.end(), _connectionId.begin(), ::tolower);
+
+    _logger = _logger.with("connection_id", _connectionId);
+    _logger.with("remote", remote).info("received rtmp connection");
 
     RTMP* rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
@@ -134,6 +141,11 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
     auto txn = AMFProp_GetNumber(AMF_GetProp(&obj, nullptr, 1));
 
     if (AVMATCH(&method, &av_connect)) {
+        if (_avReceiver) {
+            _logger.error("second connect received");
+            return false;
+        }
+
         AMFObject cobj;
         AMFProp_GetObject(AMF_GetProp(&obj, nullptr, 2), &cobj);
         for (int i = 0; i < cobj.o_num; ++i) {
@@ -156,8 +168,10 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
             }
         }
 
+        _avReceiver = _delegate->authenticate(_connectionId);
         if (!_avReceiver) {
-            _avReceiver = _delegate->allocateAVReceiver();
+            _logger.info("authentication failed");
+            return false;
         }
         return _sendConnectResult(rtmp, txn);
     } else if (AVMATCH(&method, &av_createStream)) {

@@ -8,7 +8,9 @@
 
 #include "init.hpp"
 
-Archiver::Archiver(Logger logger) : _logger{logger} {
+Archiver::Archiver(Logger logger, std::string bucket, std::string keyFormat)
+    : _logger{std::move(logger)}, _bucket{std::move(bucket)}, _keyFormat{std::move(keyFormat)}
+{
     _thread = std::thread([this] {
         _run();
     });
@@ -50,6 +52,9 @@ void Archiver::_run() {
     int nextPartNumber = 0;
     Aws::String uploadId;
 
+    size_t uploadCount = 0;
+    Aws::String currentKey;
+
     std::unique_lock<std::mutex> l{_mutex};
     while (true) {
         while (!_isDestructing && _buffer.size() < 5 * 1024 * 1024) {
@@ -62,8 +67,8 @@ void Archiver::_run() {
 
         if ((uploadBuffer.empty() && nextPartNumber > 1) || nextPartNumber > 20) {
             Aws::S3::Model::CompleteMultipartUploadRequest request;
-            request.SetBucket("foo");
-            request.SetKey("bar");
+            request.SetBucket(_bucket.c_str());
+            request.SetKey(currentKey);
             request.SetUploadId(uploadId);
 
             if (auto outcome = s3.CompleteMultipartUpload(request); outcome.IsSuccess()) {
@@ -80,9 +85,11 @@ void Archiver::_run() {
         }
 
         if (!nextPartNumber) {
+            currentKey = fmt::format(_keyFormat, uploadCount++);
+
             Aws::S3::Model::CreateMultipartUploadRequest request;
-            request.SetBucket("foo");
-            request.SetKey("bar");
+            request.SetBucket(_bucket.c_str());
+            request.SetKey(currentKey);
 
             if (auto outcome = s3.CreateMultipartUpload(request); outcome.IsSuccess()) {
                 _logger.info("created new multipart upload");
@@ -95,8 +102,8 @@ void Archiver::_run() {
 
         if (nextPartNumber) {
             Aws::S3::Model::UploadPartRequest request;
-            request.SetBucket("foo");
-            request.SetKey("bar");
+            request.SetBucket(_bucket.c_str());
+            request.SetKey(currentKey);
             request.SetPartNumber(nextPartNumber++);
             request.SetUploadId(uploadId);
 
@@ -121,9 +128,13 @@ void Archiver::_write(ArchiveDataType type, const void* data, size_t len) {
     {
         std::lock_guard<std::mutex> l{_mutex};
         auto offset = _buffer.size();
-        _buffer.resize(offset + 1 + len);
-        _buffer[offset] = static_cast<uint8_t>(type);
-        memcpy(&_buffer[offset + 1], data, len);
+        _buffer.resize(offset + 5 + len);
+        _buffer[offset++] = static_cast<uint8_t>(type);
+        _buffer[offset++] = (len >> 24) & 0xff;
+        _buffer[offset++] = (len >> 16) & 0xff;
+        _buffer[offset++] = (len >> 8) & 0xff;
+        _buffer[offset++] = len & 0xff;
+        memcpy(&_buffer[offset], data, len);
     }
     _cv.notify_one();
 }

@@ -10,7 +10,7 @@
 struct RTMPConnectionDelegate {
     virtual ~RTMPConnectionDelegate() {}
 
-    virtual std::shared_ptr<EncodedAVReceiver> allocateAVReceiver() = 0;
+    virtual std::shared_ptr<EncodedAVReceiver> authenticate(const std::string& connectionId) = 0;
 };
 
 class RTMPConnection {
@@ -23,6 +23,7 @@ public:
 private:
     Logger _logger;
     RTMPConnectionDelegate* const _delegate;
+    std::string _connectionId;
 
     std::atomic<bool> _shouldReturn{false};
 

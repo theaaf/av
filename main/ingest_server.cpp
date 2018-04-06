@@ -1,6 +1,9 @@
 #include <chrono>
 #include <csignal>
+#include <iostream>
 #include <thread>
+
+#include <args.hxx>
 
 #include "lib/ingest_server.hpp"
 
@@ -13,9 +16,25 @@ void signalHandler(int signal) {
 }
 
 int main(int argc, const char* argv[]) {
+    Logger logger;
+
+    args::ArgumentParser parser("This is the ingest server. It receives RTMP connections, archives the raw streams, and redistributes the streams to the transcoders and CDNs.");
+    args::HelpFlag help(parser, "help", "display this help", {'h', "help"});
+    args::ValueFlag<std::string> archiveBucket(parser, "s3 bucket name", "the s3 bucket to archive to", {"archive-bucket"});
+    try {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help) {
+        std::cout << parser;
+        return 0;
+    } catch (args::ParseError e) {
+        logger.error(e.what());
+        std::cerr << parser;
+        return 1;
+    }
+
     std::signal(SIGINT, signalHandler);
 
-    IngestServer s{Logger{}};
+    IngestServer s{logger, archiveBucket.Get()};
 
     if (!s.start(asio::ip::address_v4::any(), 1935)) {
         Logger{}.error("unable to start ingest server");

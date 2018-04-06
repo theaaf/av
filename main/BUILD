@@ -3,5 +3,6 @@ cc_binary(
     srcs = ["ingest_server.cpp"],
     deps = [
         "//lib",
+        "@args//:args",
     ],
 )

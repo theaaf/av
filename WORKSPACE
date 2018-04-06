@@ -48,6 +48,21 @@ cc_library(
 """,
 )
 
+new_http_archive(
+    name = "args",
+    urls = ["https://github.com/Taywee/args/archive/6.2.0.tar.gz"],
+    sha256 = "8e374ae0efeab6134a7d6b205903f79e3873e6b99a3ae284833931140a5ba1df",
+    strip_prefix = "args-6.2.0",
+    build_file_content = """
+cc_library(
+    name = "args",
+    hdrs = glob(["args.hxx"]),
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
 http_archive(
     name = "com_google_googletest",
     url = "https://github.com/google/googletest/archive/82febb8eafc0425601b0d46567dc66c7750233ff.tar.gz",
