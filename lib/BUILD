@@ -15,4 +15,5 @@ cc_test(
     name = "test",
     deps = ["//lib:lib", "@com_google_googletest//:gtest_main"],
     srcs = glob(["**/*_test.cpp"]),
+    tags = ["external"],
 )
