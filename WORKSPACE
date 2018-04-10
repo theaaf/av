@@ -1,9 +1,10 @@
 load('@bazel_tools//tools/build_defs/repo:git.bzl', 'new_git_repository')
 
-new_git_repository(
+new_http_archive(
     name = "rtmpdump",
-    remote = "git@github.aaf.cloud:av/rtmpdump.git",
-    commit = "5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f",
+    urls = ["https://github.aaf.cloud/av/rtmpdump/archive/5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f.tar.gz"],
+    sha256 = "29e8e76e8629f8dbd80b41c7042e35124d8255125df0dfb597e21563eec578bd",
+    strip_prefix = "rtmpdump-5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f",
     build_file_content = """
 cc_library(
     name = "librtmp",
@@ -63,6 +64,14 @@ cc_library(
 """,
 )
 
+new_http_archive(
+    name = "openssl",
+    url = "https://github.com/openssl/openssl/archive/OpenSSL_1_1_0h.tar.gz",
+    sha256 = "f56dd7d81ce8d3e395f83285bd700a1098ed5a4cb0a81ce9522e41e6db7e0389",
+    strip_prefix = "openssl-OpenSSL_1_1_0h",
+    build_file = "third-party/openssl/BUILD",
+)
+
 http_archive(
     name = "com_google_googletest",
     url = "https://github.com/google/googletest/archive/82febb8eafc0425601b0d46567dc66c7750233ff.tar.gz",
@@ -75,63 +84,6 @@ new_http_archive(
     urls = ["https://github.com/aws/aws-sdk-cpp/archive/1.4.30.tar.gz"],
     sha256 = "54097ad7ece5e87f628864dd33d1760b0a4d0a4920b1f431871c7a6d6b8dd8ca",
     strip_prefix = "aws-sdk-cpp-1.4.30",
-    build_file_content = """
-load("@//:build.bzl", "template_rule")
-
-cc_library(
-    name = "aws",
-    srcs = glob([
-        "aws-cpp-sdk-core/include/**/*.h",
-        "aws-cpp-sdk-core/source/*.cpp",
-        "aws-cpp-sdk-core/source/auth/**/*.cpp",
-        "aws-cpp-sdk-core/source/config/**/*.cpp",
-        "aws-cpp-sdk-core/source/client/**/*.cpp",
-        "aws-cpp-sdk-core/source/external/**/*.cpp",
-        "aws-cpp-sdk-core/source/internal/**/*.cpp",
-        "aws-cpp-sdk-core/source/http/*.cpp",
-        "aws-cpp-sdk-core/source/http/curl/**/*.cpp",
-        "aws-cpp-sdk-core/source/http/standard/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/*.cpp",
-        "aws-cpp-sdk-core/source/utils/base64/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/json/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/logging/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/memory/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/stream/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/threading/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/xml/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/crypto/*.cpp",
-        "aws-cpp-sdk-core/source/utils/crypto/commoncrypto/**/*.cpp",
-        "aws-cpp-sdk-core/source/utils/crypto/factory/**/*.cpp",
-        "aws-cpp-sdk-core/source/platform/linux-shared/*.cpp",
-        "aws-cpp-sdk-s3/include/**/*.h",
-        "aws-cpp-sdk-s3/source/**/*.cpp",
-    ]),
-    hdrs = [
-        "aws-cpp-sdk-core/include/aws/core/SDKConfig.h",
-    ],
-    defines = [
-        "ENABLE_CURL_CLIENT",
-        "ENABLE_COMMONCRYPTO_ENCRYPTION",
-        "AWS_SDK_VERSION_MAJOR=1",
-        "AWS_SDK_VERSION_MINOR=4",
-        "AWS_SDK_VERSION_PATCH=30",
-    ],
-    includes = [
-        "aws-cpp-sdk-core/include",
-        "aws-cpp-sdk-s3/include/",
-    ],
-    linkopts = ["-lcurl"],
-    visibility = ["//visibility:public"],
-)
-
-template_rule(
-    name = "SDKConfig_h",
-    src = "aws-cpp-sdk-core/include/aws/core/SDKConfig.h.in",
-    out = "aws-cpp-sdk-core/include/aws/core/SDKConfig.h",
-    substitutions = {
-        "cmakedefine": "define",
-    },
-)
-""",
+    build_file = "third-party/aws/BUILD",
 )
 

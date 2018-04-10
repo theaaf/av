@@ -1,0 +1,8 @@
+*
+!/.bazelrc
+!/BUILD
+!/build.bzl
+!/lib
+!/main
+!/third-party
+!/WORKSPACE

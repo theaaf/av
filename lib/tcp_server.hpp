@@ -1,6 +1,8 @@
 #pragma once
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -12,6 +14,9 @@
 // ConnectionClass should be a class with a run(int, asio::ip::tcp::endpoint) method, to be invoked
 // from a new thread, and a cancel() method to cause the run() invocation to return early. The Args
 // parameter represents the types of the arguments to be passed to new ConnectionClass instances.
+//
+// This class is based on the TCPAcceptor class in bittorrent/scraps:
+// https://github.com/bittorrent/scraps
 template <typename ConnectionClass, typename... Args>
 class TCPServer {
 public:

@@ -11,24 +11,24 @@ public:
     bitstream(const void* data, size_t len) : _data{reinterpret_cast<const uint8_t*>(data)}, _bit_count{len * 8} {}
 
     template <typename T>
-    auto next_bits(T* dest, int n) -> std::enable_if_t<!std::is_enum_v<T>, bool> const {
+    auto next_bits(T* dest, size_t n) -> std::enable_if_t<!std::is_enum<T>::value, bool> const {
         *dest = 0;
         if (bits_remaining() < n) {
             return false;
         }
-        for (int i = 0; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i) {
             *dest = (*dest << 1) | ((_data[(_bit_offset + i) / 8] >> (8 - (_bit_offset + i) % 8 - 1)) & 1);
         }
         return true;
     }
 
     template <typename T>
-    auto next_bits(T* dest, int n) -> std::enable_if_t<std::is_enum_v<T>, bool> const {
+    auto next_bits(T* dest, size_t n) -> std::enable_if_t<std::is_enum<T>::value, bool> const {
         return next_bits(reinterpret_cast<std::underlying_type_t<T>*>(dest), n);
     }
 
     template <typename T>
-    bool read_bits(T* dest, int n) {
+    bool read_bits(T* dest, size_t n) {
         if (next_bits(dest, n)) {
             _bit_offset += n;
             return true;
@@ -40,7 +40,7 @@ public:
         return !(_bit_offset % 8);
     }
 
-    bool read_byte_aligned_bytes(const void** dest, int n) {
+    bool read_byte_aligned_bytes(const void** dest, size_t n) {
         if (!byte_aligned() || bits_remaining() < n * 8) {
             return false;
         }

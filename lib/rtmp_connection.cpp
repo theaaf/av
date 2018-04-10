@@ -46,7 +46,9 @@ struct RTMPLogger {
     static void Callback(int level, const char* format, va_list arg) {
         char buf[500];
         auto n = vsnprintf(buf, sizeof(buf), format, arg);
-        if (n < sizeof(buf)) {
+        if (n < 0) {
+            Logger{}.error("rtmp log error: {}", format);
+        } else if (static_cast<size_t>(n) < sizeof(buf)) {
             Log(level, buf);
         } else {
             auto buf = std::vector<char>(n+1);
@@ -73,7 +75,7 @@ struct RTMPLogger {
 
 void RTMPConnection::run(int fd, asio::ip::tcp::endpoint remote) {
     InitAWS();
-    _connectionId = Aws::String(Aws::Utils::UUID::RandomUUID());
+    _connectionId = Aws::String(Aws::Utils::UUID::RandomUUID()).c_str();
     std::transform(_connectionId.begin(), _connectionId.end(), _connectionId.begin(), ::tolower);
 
     _logger = _logger.with("connection_id", _connectionId);

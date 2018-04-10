@@ -51,7 +51,7 @@ void Archiver::_run() {
     Aws::String uploadId;
 
     size_t uploadCount = 0;
-    Aws::String currentKey;
+    std::string currentKey;
 
     Aws::S3::Model::CompletedMultipartUpload completedUpload;
 
@@ -68,11 +68,12 @@ void Archiver::_run() {
         if ((uploadBuffer.empty() && nextPartNumber > 1) || nextPartNumber > 20) {
             Aws::S3::Model::CompleteMultipartUploadRequest request;
             request.SetBucket(_bucket.c_str());
-            request.SetKey(currentKey);
+            request.SetKey(currentKey.c_str());
             request.SetUploadId(uploadId);
             request.SetMultipartUpload(completedUpload);
 
-            if (auto outcome = _s3Client->CompleteMultipartUpload(request); outcome.IsSuccess()) {
+            auto outcome = _s3Client->CompleteMultipartUpload(request);
+            if (outcome.IsSuccess()) {
                 _logger.info("completed multipart upload");
             } else {
                 _logger.error("unable to complete multipart upload: {}: {}", outcome.GetError().GetExceptionName(), outcome.GetError().GetMessage());
@@ -94,9 +95,10 @@ void Archiver::_run() {
 
             Aws::S3::Model::CreateMultipartUploadRequest request;
             request.SetBucket(_bucket.c_str());
-            request.SetKey(currentKey);
+            request.SetKey(currentKey.c_str());
 
-            if (auto outcome = _s3Client->CreateMultipartUpload(request); outcome.IsSuccess()) {
+            auto outcome = _s3Client->CreateMultipartUpload(request);
+            if (outcome.IsSuccess()) {
                 _logger.info("created new multipart upload");
                 uploadId = outcome.GetResult().GetUploadId();
                 completedUpload = {};
@@ -109,7 +111,7 @@ void Archiver::_run() {
         if (nextPartNumber) {
             Aws::S3::Model::UploadPartRequest request;
             request.SetBucket(_bucket.c_str());
-            request.SetKey(currentKey);
+            request.SetKey(currentKey.c_str());
             request.SetPartNumber(nextPartNumber);
             request.SetUploadId(uploadId);
 
@@ -117,7 +119,8 @@ void Archiver::_run() {
             Aws::Utils::Stream::PreallocatedStreamBuf streamBuf(&array, array.GetLength());
             request.SetBody(std::make_shared<Aws::IOStream>(&streamBuf));
 
-            if (auto outcome = _s3Client->UploadPart(request); outcome.IsSuccess()) {
+            auto outcome = _s3Client->UploadPart(request);
+            if (outcome.IsSuccess()) {
                 Aws::S3::Model::CompletedPart completedPart;
                 completedPart.SetPartNumber(nextPartNumber);
                 completedPart.SetETag(outcome.GetResult().GetETag());
