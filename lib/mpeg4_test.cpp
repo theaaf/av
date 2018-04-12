@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "h264/h264.hpp"
+#include <h264/h264.hpp>
+
 #include "mpeg4.hpp"
 
 TEST(MPEG4AudioSpecificConfig, decode) {
@@ -25,16 +26,16 @@ TEST(AVCDecoderConfigurationRecord, decode) {
 	ASSERT_TRUE(config.decode(data, sizeof(data)));
 
     EXPECT_EQ(1, config.configurationVersion);
-    EXPECT_EQ(h264::kMainProfileIDC, config.avcProfileIndication);
+    EXPECT_EQ(h264::ProfileIDC::Main, config.avcProfileIndication);
     EXPECT_EQ(0x40, config.profileCompatibility);
     EXPECT_EQ(31, config.avcLevelIndication);
     EXPECT_EQ(3, config.lengthSizeMinusOne);
 
     ASSERT_EQ(1, config.sequenceParameterSets.size());
-    EXPECT_EQ(data + sizeof(data) - 7 - 28, config.sequenceParameterSets[0].first);
-    EXPECT_EQ(28, config.sequenceParameterSets[0].second);
+    ASSERT_EQ(28, config.sequenceParameterSets[0].size());
+    EXPECT_EQ(0, memcmp(data + sizeof(data) - 7 - 28, config.sequenceParameterSets[0].data(), config.sequenceParameterSets[0].size()));
 
     ASSERT_EQ(1, config.pictureParameterSets.size());
-    EXPECT_EQ(data + sizeof(data) - 4, config.pictureParameterSets[0].first);
-    EXPECT_EQ(4, config.pictureParameterSets[0].second);
+    ASSERT_EQ(4, config.pictureParameterSets[0].size());
+    EXPECT_EQ(0, memcmp(data + sizeof(data) - 4, config.pictureParameterSets[0].data(), config.pictureParameterSets[0].size()));
 }

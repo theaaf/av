@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "archiver.hpp"
-#include "init.hpp"
+#include "aws.hpp"
 
 #include <aws/core/auth/AWSCredentialsProvider.h>
 #include <aws/core/client/DefaultRetryStrategy.h>
@@ -60,7 +60,8 @@ TEST(Archiver, archiving) {
     auto bucket = "archiving-test";
     auto client = MinioS3Client(bucket);
     if (!client) {
-        FAIL() << "Unable to connect to Minio. Run `docker-compose up minio` to start it and complete this test.";
+        Logger{}.warn("Unable to connect to Minio. Run `docker-compose up minio` to start it and perform this test.");
+        return;
     }
 
     {

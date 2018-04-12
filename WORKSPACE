@@ -87,3 +87,18 @@ new_http_archive(
     build_file = "third-party/aws/BUILD",
 )
 
+new_http_archive(
+    name = "ffmpeg",
+    url = "https://github.com/FFmpeg/FFmpeg/archive/n3.4.2.tar.gz",
+    sha256 = "d079c68dc19a0223239a152ffc2b67ef1e9d3144e4d2c2563380dc59dccf33e5",
+    strip_prefix = "FFmpeg-n3.4.2",
+    build_file = "third-party/ffmpeg/BUILD",
+)
+
+new_http_archive(
+    name = "yasm",
+    url = "http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz",
+    sha256 = "3dce6601b495f5b3d45b59f7d2492a340ee7e84b5beca17e48f862502bd5603f",
+    strip_prefix = "yasm-1.3.0",
+    build_file = "third-party/yasm/BUILD",
+)

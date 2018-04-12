@@ -45,10 +45,23 @@ enum class MPEG4ChannelConfiguration {
 
 std::ostream& operator<<(std::ostream& os, const MPEG4ChannelConfiguration& cc);
 
+static constexpr size_t ChannelCount(MPEG4ChannelConfiguration cc) {
+    return cc == MPEG4ChannelConfiguration::EightChannels ? 8 : static_cast<size_t>(cc);
+}
+
 struct MPEG4AudioSpecificConfig {
     MPEG4AudioObjectType objectType;
     unsigned int frequency;
     MPEG4ChannelConfiguration channelConfiguration;
+
+    constexpr size_t channelCount() const { return ChannelCount(channelConfiguration); }
+    MPEG4SamplingFrequency frequencyIndex() const;
+
+    constexpr bool operator==(const MPEG4AudioSpecificConfig& other) const {
+        return objectType == other.objectType && frequency == other.frequency && channelConfiguration == other.channelConfiguration;
+    }
+
+    std::vector<uint8_t> adtsHeader(size_t aacLength) const;
 
     bool decode(const void* data, size_t len);
 };
@@ -59,8 +72,10 @@ struct AVCDecoderConfigurationRecord {
     unsigned int profileCompatibility;
     unsigned int avcLevelIndication;
     unsigned int lengthSizeMinusOne;
-    std::vector<std::pair<const void*, size_t>> sequenceParameterSets;
-    std::vector<std::pair<const void*, size_t>> pictureParameterSets;
+    std::vector<std::vector<uint8_t>> sequenceParameterSets;
+    std::vector<std::vector<uint8_t>> pictureParameterSets;
+
+    bool operator==(const AVCDecoderConfigurationRecord& other) const;
 
     bool decode(const void* data, size_t len);
 };

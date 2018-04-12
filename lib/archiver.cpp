@@ -5,7 +5,7 @@
 #include <aws/s3/model/UploadPartRequest.h>
 #include <aws/s3/model/CompleteMultipartUploadRequest.h>
 
-#include "init.hpp"
+#include "aws.hpp"
 
 Archiver::Archiver(Logger logger, std::string bucket, std::string keyFormat)
     : _logger{std::move(logger)}, _bucket{std::move(bucket)}, _keyFormat{std::move(keyFormat)}
@@ -25,19 +25,36 @@ Archiver::~Archiver() {
 }
 
 void Archiver::receiveEncodedAudioConfig(const void* data, size_t len) {
-    _write(ArchiveDataType::AudioConfig, data, len);
+    _write(ArchiveDataType::AudioConfig, [&](uint8_t* dest) {
+        memcpy(dest, data, len);
+    }, len);
 }
 
-void Archiver::receiveEncodedAudio(const void* data, size_t len) {
-    _write(ArchiveDataType::Audio, data, len);
+void Archiver::receiveEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) {
+    _write(ArchiveDataType::Audio, [&](uint8_t* dest) {
+        for (int i = 0; i < 8; ++i) {
+            *(dest++) = (pts.count() >> ((7 - i) * 8)) & 0xff;
+        }
+        memcpy(dest, data, len);
+    }, len + 8);
 }
 
 void Archiver::receiveEncodedVideoConfig(const void* data, size_t len) {
-    _write(ArchiveDataType::VideoConfig, data, len);
+    _write(ArchiveDataType::VideoConfig, [&](uint8_t* dest) {
+        memcpy(dest, data, len);
+    }, len);
 }
 
-void Archiver::receiveEncodedVideo(const void* data, size_t len) {
-    _write(ArchiveDataType::Video, data, len);
+void Archiver::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {
+    _write(ArchiveDataType::Video, [&](uint8_t* dest) {
+        for (int i = 0; i < 8; ++i) {
+            *(dest++) = (pts.count() >> ((7 - i) * 8)) & 0xff;
+        }
+        for (int i = 0; i < 8; ++i) {
+            *(dest++) = (dts.count() >> ((7 - i) * 8)) & 0xff;
+        }
+        memcpy(dest, data, len);
+    }, len + 16);
 }
 
 void Archiver::_run() {
@@ -137,7 +154,7 @@ void Archiver::_run() {
     _logger.info("archiver thread exiting");
 }
 
-void Archiver::_write(ArchiveDataType type, const void* data, size_t len) {
+void Archiver::_write(ArchiveDataType type, std::function<void(uint8_t*)> write, size_t len) {
     auto steadyTime = std::chrono::steady_clock::now();
     auto systemTime = std::chrono::system_clock::now();
 
@@ -163,7 +180,7 @@ void Archiver::_write(ArchiveDataType type, const void* data, size_t len) {
             _buffer[offset++] = (systemNano >> ((7 - i) * 8)) & 0xff;
         }
 
-        memcpy(&_buffer[offset], data, len);
+        write(&_buffer[offset]);
     }
     _cv.notify_one();
 }

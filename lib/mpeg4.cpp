@@ -1,6 +1,6 @@
 #include "mpeg4.hpp"
 
-#include "h264/bitstream.hpp"
+#include <h264/bitstream.hpp>
 
 std::ostream& operator<<(std::ostream& os, const MPEG4AudioObjectType& ot) {
     return os << static_cast<std::underlying_type_t<MPEG4AudioObjectType>>(ot);
@@ -8,6 +8,41 @@ std::ostream& operator<<(std::ostream& os, const MPEG4AudioObjectType& ot) {
 
 std::ostream& operator<<(std::ostream& os, const MPEG4ChannelConfiguration& cc) {
     return os << static_cast<std::underlying_type_t<MPEG4ChannelConfiguration>>(cc);
+}
+
+std::vector<uint8_t> MPEG4AudioSpecificConfig::adtsHeader(size_t aacLength) const {
+    const auto frameLength = 7 + aacLength;
+    std::vector<uint8_t> ret(7);
+    ret[0] = 0xff /* syncword */;
+    ret[1] = 0xf0 /* syncword */ | 1 /* protection absent */;
+    ret[2] = (static_cast<unsigned int>(objectType) - 1) << 6;
+    ret[2] |= static_cast<unsigned int>(frequencyIndex()) << 2;
+    ret[2] |= static_cast<unsigned int>(channelConfiguration) >> 2;
+    ret[3] = static_cast<unsigned int>(channelConfiguration) << 6;
+    ret[3] |= frameLength >> 11;
+    ret[4] = (frameLength >> 3);
+    ret[5] = (frameLength << 5) | 0x1f /* buffer fullness */;
+    ret[6] = 0xfc /* buffer fullness */ | 0 /* raw data blocks */;
+    return ret;
+}
+
+MPEG4SamplingFrequency MPEG4AudioSpecificConfig::frequencyIndex() const {
+    switch (frequency) {
+        case 96000: return MPEG4SamplingFrequency::F96000Hz;
+        case 88200: return MPEG4SamplingFrequency::F88200Hz;
+        case 64000: return MPEG4SamplingFrequency::F64000Hz;
+        case 48000: return MPEG4SamplingFrequency::F48000Hz;
+        case 44100: return MPEG4SamplingFrequency::F44100Hz;
+        case 32000: return MPEG4SamplingFrequency::F32000Hz;
+        case 24000: return MPEG4SamplingFrequency::F24000Hz;
+        case 22050: return MPEG4SamplingFrequency::F22050Hz;
+        case 16000: return MPEG4SamplingFrequency::F16000Hz;
+        case 12000: return MPEG4SamplingFrequency::F12000Hz;
+        case 11025: return MPEG4SamplingFrequency::F11025Hz;
+        case 8000: return MPEG4SamplingFrequency::F8000Hz;
+        case 7350: return MPEG4SamplingFrequency::F7350Hz;
+    }
+    return MPEG4SamplingFrequency::Explicit;
 }
 
 bool MPEG4AudioSpecificConfig::decode(const void* data, size_t len) {
@@ -23,12 +58,12 @@ bool MPEG4AudioSpecificConfig::decode(const void* data, size_t len) {
         objectType = static_cast<MPEG4AudioObjectType>(static_cast<int>(objectType) + 32);
     }
 
-    MPEG4SamplingFrequency frequencyEnum;
-    if (!b.read_bits(&frequencyEnum, 4)) {
+    MPEG4SamplingFrequency frequencyIndex;
+    if (!b.read_bits(&frequencyIndex, 4)) {
         return false;
     }
 
-    switch (frequencyEnum) {
+    switch (frequencyIndex) {
     case MPEG4SamplingFrequency::F96000Hz:
         frequency = 96000;
         break;
@@ -80,6 +115,18 @@ bool MPEG4AudioSpecificConfig::decode(const void* data, size_t len) {
     return b.read_bits(&channelConfiguration, 4);
 }
 
+bool AVCDecoderConfigurationRecord::operator==(const AVCDecoderConfigurationRecord& other) const {
+    return true
+        && configurationVersion == other.configurationVersion
+        && avcProfileIndication == other.avcProfileIndication
+        && profileCompatibility == other.profileCompatibility
+        && avcLevelIndication == other.avcLevelIndication
+        && lengthSizeMinusOne == other.lengthSizeMinusOne
+        && sequenceParameterSets == other.sequenceParameterSets
+        && pictureParameterSets == other.pictureParameterSets
+    ;
+}
+
 bool AVCDecoderConfigurationRecord::decode(const void* data, size_t len) {
     h264::bitstream b{data, len};
 
@@ -106,7 +153,7 @@ bool AVCDecoderConfigurationRecord::decode(const void* data, size_t len) {
         if (!b.read_bits(&length, 16) || !b.read_byte_aligned_bytes(&data, length)) {
             return false;
         }
-        sequenceParameterSets.emplace_back(data, length);
+        sequenceParameterSets.emplace_back(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + length);
     }
 
     size_t numOfPictureParameterSets;
@@ -121,7 +168,7 @@ bool AVCDecoderConfigurationRecord::decode(const void* data, size_t len) {
         if (!b.read_bits(&length, 16) || !b.read_byte_aligned_bytes(&data, length)) {
             return false;
         }
-        pictureParameterSets.emplace_back(data, length);
+        pictureParameterSets.emplace_back(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + length);
     }
 
     return true;

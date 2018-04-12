@@ -1,8 +1,27 @@
 #pragma once
 
-#include <type_traits>
+#include <cstdint>
+#include <utility>
+
+#include "error.hpp"
 
 namespace h264 {
+
+class bitstream;
+
+template <typename T>
+error decode(bitstream* bs, T dest) {
+    return dest->decode(bs);
+}
+
+template <typename Next, typename... Rem>
+error decode(bitstream* bs, Next&& next, Rem&&... rem) {
+    auto err = decode(bs, next);
+    if (err) {
+        return err;
+    }
+    return decode(bs, std::forward<Rem>(rem)...);
+}
 
 // bitstream represents an h.264 bitstream as defined by ITU-T H.264. It mimics the naming and
 // conventions in the spec, which don't necessarily match the rest of our codebase.
@@ -10,30 +29,38 @@ class bitstream {
 public:
     bitstream(const void* data, size_t len) : _data{reinterpret_cast<const uint8_t*>(data)}, _bit_count{len * 8} {}
 
-    template <typename T>
-    auto next_bits(T* dest, size_t n) -> std::enable_if_t<!std::is_enum<T>::value, bool> const {
-        *dest = 0;
+    template <typename... Args>
+    error decode(Args&&... args) {
+        return ::h264::decode(this, std::forward<Args>(args)...);
+    }
+
+    bool advance_bits(size_t n) {
         if (bits_remaining() < n) {
             return false;
         }
-        for (size_t i = 0; i < n; ++i) {
-            *dest = (*dest << 1) | ((_data[(_bit_offset + i) / 8] >> (8 - (_bit_offset + i) % 8 - 1)) & 1);
-        }
+        _bit_offset += n;
         return true;
     }
 
-    template <typename T>
-    auto next_bits(T* dest, size_t n) -> std::enable_if_t<std::is_enum<T>::value, bool> const {
-        return next_bits(reinterpret_cast<std::underlying_type_t<T>*>(dest), n);
+    uint64_t next_bits(size_t n) const {
+        if (bits_remaining() < n) {
+            return 0;
+        }
+        uint64_t ret = 0;
+        for (size_t i = 0; i < n; ++i) {
+            ret = (ret << 1) | ((_data[(_bit_offset + i) / 8] >> (8 - (_bit_offset + i) % 8 - 1)) & 1);
+        }
+        return ret;
     }
 
     template <typename T>
     bool read_bits(T* dest, size_t n) {
-        if (next_bits(dest, n)) {
-            _bit_offset += n;
-            return true;
+        if (bits_remaining() < n) {
+            return false;
         }
-        return false;
+        *dest = static_cast<T>(next_bits(n));
+        _bit_offset += n;
+        return true;
     }
 
     bool byte_aligned() const {
@@ -55,7 +82,7 @@ public:
 
 private:
     const uint8_t* _data;
-    const size_t _bit_count;
+    size_t _bit_count;
     size_t _bit_offset = 0;
 };
 

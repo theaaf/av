@@ -2,7 +2,7 @@
 
 #include <aws/core/utils/UUID.h>
 
-#include "init.hpp"
+#include "aws.hpp"
 #include "librtmp/log.h"
 #include "mpeg4.hpp"
 
@@ -223,14 +223,18 @@ bool RTMPConnection::_servePacket(RTMP* rtmp, RTMPPacket* packet) {
             ).info("received audio config");
             _avReceiver->receiveEncodedAudioConfig(packet->m_body + 2, packet->m_nBodySize - 2);
         } else if (packet->m_body[1] == 1) {
-            _avReceiver->receiveEncodedAudio(packet->m_body + 2, packet->m_nBodySize - 2);
+            auto pts = std::chrono::milliseconds{packet->m_nTimeStamp};
+            _avReceiver->receiveEncodedAudio(pts, packet->m_body + 2, packet->m_nBodySize - 2);
         }
         return true;
-    case RTMP_PACKET_TYPE_VIDEO:
+    case RTMP_PACKET_TYPE_VIDEO: {
         if (!_avReceiver || packet->m_nBodySize < 5 || (packet->m_body[0] & 0x0f) != 0x07) {
             _logger.error("invalid video packet");
             return false;
-        } else if (packet->m_body[1] == 0) {
+        }
+        auto ctPtr = reinterpret_cast<const uint8_t*>(packet->m_body + 2);
+        auto compositionTimeOffset = std::chrono::milliseconds{(static_cast<unsigned int>(ctPtr[0]) << 16) | (static_cast<unsigned int>(ctPtr[1]) << 8) | ctPtr[2]};
+        if (packet->m_body[1] == 0) {
             AVCDecoderConfigurationRecord config;
             if (!config.decode(packet->m_body + 5, packet->m_nBodySize - 5)) {
                 _logger.error("unable to decode video config");
@@ -238,13 +242,17 @@ bool RTMPConnection::_servePacket(RTMP* rtmp, RTMPPacket* packet) {
             }
             _logger.with(
                 "profile", config.avcProfileIndication,
-                "level", config.avcLevelIndication
+                "level", config.avcLevelIndication,
+                "length_size", config.lengthSizeMinusOne + 1
             ).info("received video config");
             _avReceiver->receiveEncodedVideoConfig(packet->m_body + 5, packet->m_nBodySize - 5);
         } else if (packet->m_body[1] == 1) {
-            _avReceiver->receiveEncodedVideo(packet->m_body + 5, packet->m_nBodySize - 5);
+            auto dts = std::chrono::milliseconds{packet->m_nTimeStamp};
+            auto pts = dts + compositionTimeOffset;
+            _avReceiver->receiveEncodedVideo(pts, dts, packet->m_body + 5, packet->m_nBodySize - 5);
         }
         return true;
+    }
     default:
         _logger.warn("received unknown rtmp packet type {}", packet->m_packetType);
     }

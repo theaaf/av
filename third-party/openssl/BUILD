@@ -1,8 +1,6 @@
 config_setting(
     name = "darwin",
-    values = {
-        "cpu": "darwin_x86_64",
-    },
+    constraint_values = ["@bazel_tools//platforms:osx"],
 )
 
 cc_library(
