@@ -145,6 +145,9 @@ void Packager::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::m
     packet.stream_index = _videoStream->index;
     packet.pts = pts.count() / 1000000.0 / av_q2d(_videoStream->time_base);
     packet.dts = dts.count() / 1000000.0 / av_q2d(_videoStream->time_base);
+    if (isIDR) {
+        packet.flags |= AV_PKT_FLAG_KEY;
+    }
 
     auto err = av_interleaved_write_frame(_outputContext, &packet);
     if (err != 0) {
@@ -187,6 +190,31 @@ void Packager::_beginSegment() {
     _videoStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
     _videoStream->codecpar->width = _videoConfigSPS->FrameCroppingRectangleWidth();
     _videoStream->codecpar->height = _videoConfigSPS->FrameCroppingRectangleHeight();
+
+    size_t extraDataSize = 0;
+    for (auto sps : _videoConfig->sequenceParameterSets) {
+        extraDataSize += 3 + sps.size();
+    }
+    for (auto pps : _videoConfig->pictureParameterSets) {
+        extraDataSize += 3 + pps.size();
+    }
+    auto ptr = reinterpret_cast<uint8_t*>(av_malloc(extraDataSize + AV_INPUT_BUFFER_PADDING_SIZE));
+    _videoStream->codecpar->extradata = ptr;
+    _videoStream->codecpar->extradata_size = extraDataSize;
+    for (auto sps : _videoConfig->sequenceParameterSets) {
+        ptr[0] = 0;
+        ptr[1] = 0;
+        ptr[2] = 1;
+        std::memcpy(ptr + 3, sps.data(), sps.size());
+        ptr += 3 + sps.size();
+    }
+    for (auto pps : _videoConfig->pictureParameterSets) {
+        ptr[0] = 0;
+        ptr[1] = 0;
+        ptr[2] = 1;
+        std::memcpy(ptr + 3, pps.data(), pps.size());
+        ptr += 3 + pps.size();
+    }
 
     _outputContext->pb = _ioContext;
 

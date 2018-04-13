@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <time.h>
 
 #include "archiver.hpp"
 #include "encoded_av_splitter.hpp"
