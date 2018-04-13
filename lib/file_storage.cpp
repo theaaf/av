@@ -158,6 +158,7 @@ AsyncFile::AsyncFile(FileStorage* storage, std::string path) {
         }
 
         f->close();
+        _isComplete = true;
     });
 }
 
@@ -179,4 +180,8 @@ void AsyncFile::close() {
         _isClosed = true;
     }
     _cv.notify_one();
+}
+
+bool AsyncFile::isComplete() const {
+    return _isComplete;
 }

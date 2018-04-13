@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <thread>
 
 #include <aws/core/auth/AWSCredentialsProvider.h>
 #include <aws/core/client/DefaultRetryStrategy.h>
@@ -140,7 +142,11 @@ TEST(AsyncFile, file) {
     {
         AsyncFile file{&storage, "foo"};
         file.write(std::make_shared<std::vector<uint8_t>>(1024, 1));
+        EXPECT_FALSE(file.isComplete());
         file.close();
+        while (!file.isComplete()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
     }
 
     auto f = std::fopen((directory + "/foo").c_str(), "rb");

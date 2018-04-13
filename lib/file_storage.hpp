@@ -112,6 +112,9 @@ public:
     void write(std::shared_ptr<std::vector<uint8_t>> data);
     void close();
 
+    // Returns true if the file has been fully written and closed.
+    bool isComplete() const;
+
 private:
     std::thread _thread;
     std::mutex _mutex;
@@ -119,4 +122,5 @@ private:
 
     std::queue<std::shared_ptr<std::vector<uint8_t>>> _writes;
     bool _isClosed = false;
+    std::atomic<bool> _isComplete{false};
 };

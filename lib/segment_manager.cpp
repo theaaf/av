@@ -11,7 +11,21 @@ std::shared_ptr<SegmentStorage::Segment> SegmentManager::createSegment(const std
     for (auto fs : _storage) {
         files.emplace_back(std::make_shared<AsyncFile>(fs, path));
     }
-    return std::make_shared<Segment>(files);
+
+    auto segment = std::make_shared<Segment>(files);
+
+    std::lock_guard<std::mutex> l{_mutex};
+    for (size_t i = 0; i < _segments.size();) {
+        if (_segments[i]->isComplete()) {
+            _segments[i] = _segments.back();
+            _segments.resize(_segments.size() - 1);
+        } else {
+            ++i;
+        }
+    }
+    _segments.emplace_back(segment);
+
+    return segment;
 }
 
 bool SegmentManager::Segment::write(const void* data, size_t len) {
@@ -26,6 +40,15 @@ bool SegmentManager::Segment::write(const void* data, size_t len) {
 bool SegmentManager::Segment::close() {
     for (auto& f : _files) {
         f->close();
+    }
+    return true;
+}
+
+bool SegmentManager::Segment::isComplete() const {
+    for (auto& f : _files) {
+        if (!f->isComplete()) {
+            return false;
+        }
     }
     return true;
 }

@@ -32,7 +32,14 @@ private:
         virtual bool write(const void* data, size_t len) override;
         virtual bool close() override;
 
+        // Returns true if all files have been fully written and closed.
+        bool isComplete() const;
+
     private:
         std::vector<std::shared_ptr<AsyncFile>> _files;
     };
+
+    // Segments that haven't fully completed need to be kept alive so users aren't blocked when they
+    // drop their references.
+    std::vector<std::shared_ptr<Segment>> _segments;
 };
