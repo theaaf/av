@@ -162,7 +162,7 @@ void Packager::_beginSegment() {
 
     _logger.info("beginning new segment");
 
-    _segment = _storage->createSegment();
+    _segment = _storage->createSegment("ts");
     if (!_segment) {
         _logger.error("unable to create segment");
         _endSegment();

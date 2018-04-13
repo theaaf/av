@@ -1,10 +1,10 @@
 #include "rtmp_connection.hpp"
 
-#include <aws/core/utils/UUID.h>
+#include <unistd.h>
 
-#include "aws.hpp"
 #include "librtmp/log.h"
 #include "mpeg4.hpp"
+#include "utility.hpp"
 
 #define STR2AVAL(av, str) av.av_val = const_cast<char*>(str); av.av_len = strlen(av.av_val)
 #define SAVCX(name, x) static const AVal name = {const_cast<char*>(x), sizeof(x)-1}
@@ -74,9 +74,13 @@ struct RTMPLogger {
 } _rtmpLogger;
 
 void RTMPConnection::run(int fd, asio::ip::tcp::endpoint remote) {
-    InitAWS();
-    _connectionId = Aws::String(Aws::Utils::UUID::RandomUUID()).c_str();
-    std::transform(_connectionId.begin(), _connectionId.end(), _connectionId.begin(), ::tolower);
+    _connectionId = GenerateUUID();
+
+    if (!_waitUntilReadable(fd)) {
+        // probably just a health check
+        close(fd);
+        return;
+    }
 
     _logger = _logger.with("connection_id", _connectionId);
     _logger.with("remote", remote).info("received rtmp connection");

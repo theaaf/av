@@ -10,6 +10,12 @@ RUN apt-get update
 RUN apt-get install -y bazel git openjdk-8-jdk libcurl4-openssl-dev make
 
 WORKDIR /tmp/av
+
+# go ahead and compile the big dependencies so devs can test other changes reasonably quickly
+COPY .bazelrc build.bzl BUILD WORKSPACE ./
+COPY third-party third-party
+RUN bazel build @openssl//:libssl.a @ffmpeg//:libavformat.a @aws//:aws
+
 COPY . .
 
 RUN bazel test //lib:test

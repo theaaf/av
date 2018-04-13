@@ -22,7 +22,7 @@ class TCPServer {
 public:
     // Any arguments passed to the constructor will be copied and passed to each connection class
     // constructor (including the logger).
-    TCPServer(Logger logger, const Args&... args) : _logger{logger}, _args(args...), _acceptor(_service), _socket(_service) {}
+    TCPServer(Logger logger, const Args&... args) : _logger{logger}, _args(args...), _acceptor(_service) {}
     TCPServer(const TCPServer& other) = delete;
     TCPServer& operator=(const TCPServer& other) = delete;
     ~TCPServer() { _stop(); }
@@ -76,8 +76,8 @@ public:
             }
         });
 
-        _acceptor.async_accept(
-            _socket, std::bind(ArgsHelper<sizeof...(Args)>::AcceptHandler(), this, std::placeholders::_1));
+        auto socket = std::make_shared<asio::ip::tcp::socket>(_service);
+        _acceptor.async_accept(*socket, std::bind(ArgsHelper<sizeof...(Args)>::AcceptHandler(), this, socket, std::placeholders::_1));
 
         return true;
     }
@@ -118,7 +118,6 @@ private:
     std::thread _serviceThread;
 
     asio::ip::tcp::acceptor _acceptor;
-    asio::ip::tcp::socket _socket;
 
     struct Connection {
         ~Connection() {
@@ -144,7 +143,7 @@ private:
 
     template <int... S>
     struct ArgsHelper<0, S...> {
-        typedef void (TCPServer::*AcceptHandlerPointer)(const asio::error_code&);
+        typedef void (TCPServer::*AcceptHandlerPointer)(std::shared_ptr<asio::ip::tcp::socket>, const asio::error_code&);
         static constexpr AcceptHandlerPointer AcceptHandler() { return &TCPServer::_acceptHandler<S...>; }
     };
 
@@ -172,23 +171,27 @@ private:
     }
 
     template <int... ArgIndices>
-    void _acceptHandler(const asio::error_code& error) {
+    void _acceptHandler(std::shared_ptr<asio::ip::tcp::socket> socket, const asio::error_code& error) {
+        if (_isCancelled || error == asio::error::operation_aborted) {
+            return;
+        }
+        auto nextSocket = std::make_shared<asio::ip::tcp::socket>(_service);
+        _acceptor.async_accept(*nextSocket, std::bind(&TCPServer::_acceptHandler<ArgIndices...>, this, nextSocket, std::placeholders::_1));
+
         if (error) {
-            if (error != asio::error::operation_aborted) {
-                _logger.error("tcp server error: {}", error.message().c_str());
-            }
+            _logger.error("accept error: {}", error.message().c_str());
             return;
         }
 
-        int fd = dup(_socket.native_handle());
+        int fd = dup(socket->native_handle());
         if (fd == -1) {
             _logger.error("error duplicating socket handle (errno = {})", errno);
             return;
         }
-        auto remote = _socket.remote_endpoint();
+        auto remote = socket->remote_endpoint();
 
         try {
-            _socket.close();
+            socket->close();
         } catch (...) {}
 
         auto connection = std::make_shared<Connection>();
@@ -205,7 +208,5 @@ private:
 
         std::lock_guard<std::mutex> lock{_mutex};
         _connections.emplace(connectionClass.get(), connection);
-        _acceptor.async_accept(
-            _socket, std::bind(&TCPServer::_acceptHandler<ArgIndices...>, this, std::placeholders::_1));
     }
 };

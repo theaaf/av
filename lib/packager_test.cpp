@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "encoded_av_receiver_test.hpp"
+#include "logger_test.hpp"
 #include "packager.hpp"
 #include "utility.hpp"
 
@@ -19,12 +20,14 @@ struct TestSegmentStorage : SegmentStorage {
             return true;
         }
 
+        std::string extension;
         bool closed = false;
         size_t bytesWritten = 0;
     };
 
-    virtual std::shared_ptr<SegmentStorage::Segment> createSegment() override {
+    virtual std::shared_ptr<SegmentStorage::Segment> createSegment(const std::string& extension) override {
         auto segment = std::make_shared<Segment>();
+        segment->extension = extension;
         segments.emplace_back(segment);
         return segment;
     }
@@ -34,15 +37,17 @@ struct TestSegmentStorage : SegmentStorage {
 
 TEST(Packager, packaging) {
     TestSegmentStorage storage;
+    TestLogDestination logDestination;
 
     {
-        Packager packager{Logger::Void, &storage};
+        Packager packager{&logDestination, &storage};
         ExerciseEncodedAVReceiver(&packager);
     }
 
     EXPECT_GT(storage.segments.size(), 2);
 
     for (size_t i = 0; i < storage.segments.size(); ++i) {
+        EXPECT_EQ("ts", storage.segments[i]->extension) << "segment " << i << " has unexpected extension";
         EXPECT_TRUE(storage.segments[i]->closed) << "segment " << i << " wasn't closed (" << storage.segments.size() << " segments were opened)";
     }
 

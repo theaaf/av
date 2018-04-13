@@ -3,7 +3,8 @@
 #include <chrono>
 #include <cstddef>
 
-// Simultaneous calls to EncodedAudioReceiver's methods are not allowed.
+// Simultaneous calls to EncodedAudioReceiver's methods are not allowed. Receivers are expected to
+// return quickly from calls, performing expensive tasks asynchronously if needed.
 struct EncodedAudioReceiver {
     virtual ~EncodedAudioReceiver() {}
 
@@ -14,7 +15,8 @@ struct EncodedAudioReceiver {
     virtual void receiveEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) {}
 };
 
-// Simultaneous calls to EncodedVideoReceiver's methods are not allowed.
+// Simultaneous calls to EncodedVideoReceiver's methods are not allowed. Receivers are expected to
+// return quickly from calls, performing expensive tasks asynchronously if needed.
 struct EncodedVideoReceiver {
     virtual ~EncodedVideoReceiver() {}
 

@@ -6,8 +6,24 @@ This repo is home of the servers that directly route and manipulate audio / vide
 
 Builds are done using [Bazel](https://bazel.build/). For example: `bazel build //main:ingest-server`
 
+You can also perform a Docker build: `docker build . -t av`
+
+## Running
+
+At the moment, the only application here is the ingest server. After building it, you can run it like so:
+
+```
+./bazel-bin/main/ingest-server
+```
+
+This will start up an ingest server that accepts RTMP connections and does nothing with the streams. For something more interesting, you can pass some flags:
+
+```
+./bazel-bin/main/ingest-server --archive-storage file:archive --segment-storage file:segments
+```
+
+Now, archive files will be written to the ./archive directory, and segments will be written to ./segments.
+
 ## Testing
 
-To run the tests, you need to run a local Minio server: `docker-compose up minio`
-
-Then run the tests with Bazel: `bazel test lib:test`
+Run the tests with Bazel: `bazel test lib:test`

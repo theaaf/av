@@ -12,4 +12,5 @@ cc_test(
     deps = ["//lib/h264:lib", "@com_google_googletest//:gtest_main"],
     srcs = glob(["**/*_test.cpp", "**/*_test.hpp"]),
     linkstatic = True,
+    timeout = "short",
 )

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stddef.h>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 template <typename T = uint8_t>
@@ -22,3 +24,5 @@ std::vector<uint8_t> HexToVector(const char(&hex)[N]) {
     }
     return ret;
 }
+
+std::string GenerateUUID();

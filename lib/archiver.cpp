@@ -1,14 +1,7 @@
 #include "archiver.hpp"
 
-#include <aws/core/utils/stream/PreallocatedStreamBuf.h>
-#include <aws/s3/model/CreateMultipartUploadRequest.h>
-#include <aws/s3/model/UploadPartRequest.h>
-#include <aws/s3/model/CompleteMultipartUploadRequest.h>
-
-#include "aws.hpp"
-
-Archiver::Archiver(Logger logger, std::string bucket, std::string keyFormat)
-    : _logger{std::move(logger)}, _bucket{std::move(bucket)}, _keyFormat{std::move(keyFormat)}
+Archiver::Archiver(Logger logger, FileStorage* storage, std::string pathFormat)
+    : _logger{std::move(logger)}, _storage{std::move(storage)}, _pathFormat{std::move(pathFormat)}
 {
     _thread = std::thread([this] {
         _run();
@@ -26,7 +19,7 @@ Archiver::~Archiver() {
 
 void Archiver::receiveEncodedAudioConfig(const void* data, size_t len) {
     _write(ArchiveDataType::AudioConfig, [&](uint8_t* dest) {
-        memcpy(dest, data, len);
+        std::memcpy(dest, data, len);
     }, len);
 }
 
@@ -35,13 +28,13 @@ void Archiver::receiveEncodedAudio(std::chrono::microseconds pts, const void* da
         for (int i = 0; i < 8; ++i) {
             *(dest++) = (pts.count() >> ((7 - i) * 8)) & 0xff;
         }
-        memcpy(dest, data, len);
+        std::memcpy(dest, data, len);
     }, len + 8);
 }
 
 void Archiver::receiveEncodedVideoConfig(const void* data, size_t len) {
     _write(ArchiveDataType::VideoConfig, [&](uint8_t* dest) {
-        memcpy(dest, data, len);
+        std::memcpy(dest, data, len);
     }, len);
 }
 
@@ -53,28 +46,22 @@ void Archiver::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::m
         for (int i = 0; i < 8; ++i) {
             *(dest++) = (dts.count() >> ((7 - i) * 8)) & 0xff;
         }
-        memcpy(dest, data, len);
+        std::memcpy(dest, data, len);
     }, len + 16);
 }
 
 void Archiver::_run() {
     _logger.info("archiver thread running");
 
-    InitAWS();
-
     std::vector<uint8_t> uploadBuffer;
 
-    int nextPartNumber = 0;
-    Aws::String uploadId;
-
+    std::shared_ptr<FileStorage::File> file;
+    std::chrono::steady_clock::time_point fileTime;
     size_t uploadCount = 0;
-    std::string currentKey;
-
-    Aws::S3::Model::CompletedMultipartUpload completedUpload;
 
     std::unique_lock<std::mutex> l{_mutex};
     while (true) {
-        while (!_isDestructing && _buffer.size() < 5 * 1024 * 1024) {
+        while (!_isDestructing && _buffer.empty()) {
             _cv.wait(l);
         }
 
@@ -82,69 +69,29 @@ void Archiver::_run() {
         uploadBuffer.swap(_buffer);
         l.unlock();
 
-        if ((uploadBuffer.empty() && nextPartNumber > 1) || nextPartNumber > 20) {
-            Aws::S3::Model::CompleteMultipartUploadRequest request;
-            request.SetBucket(_bucket.c_str());
-            request.SetKey(currentKey.c_str());
-            request.SetUploadId(uploadId);
-            request.SetMultipartUpload(completedUpload);
+        auto now = std::chrono::steady_clock::now();
 
-            auto outcome = _s3Client->CompleteMultipartUpload(request);
-            if (outcome.IsSuccess()) {
-                _logger.info("completed multipart upload");
-            } else {
-                _logger.error("unable to complete multipart upload: {}: {}", outcome.GetError().GetExceptionName(), outcome.GetError().GetMessage());
-            }
-
-            nextPartNumber = 0;
+        if (file && (uploadBuffer.empty() || now - fileTime > std::chrono::minutes(5))) {
+            _logger.info("closing archive file");
+            file->close();
+            file = nullptr;
         }
 
         if (uploadBuffer.empty()) {
             break;
         }
 
-        if (!nextPartNumber) {
-            if (!_s3Client) {
-                _s3Client = std::make_shared<Aws::S3::S3Client>();
-            }
-
-            currentKey = fmt::format(_keyFormat, uploadCount++);
-
-            Aws::S3::Model::CreateMultipartUploadRequest request;
-            request.SetBucket(_bucket.c_str());
-            request.SetKey(currentKey.c_str());
-
-            auto outcome = _s3Client->CreateMultipartUpload(request);
-            if (outcome.IsSuccess()) {
-                _logger.info("created new multipart upload");
-                uploadId = outcome.GetResult().GetUploadId();
-                completedUpload = {};
-                nextPartNumber = 1;
-            } else {
-                _logger.error("unable to create multipart upload: {}: {}", outcome.GetError().GetExceptionName(), outcome.GetError().GetMessage());
-            }
+        if (!file) {
+            auto path = fmt::format(_pathFormat, uploadCount++);
+            _logger.with("path", path).info("creating new archive file");
+            file = _storage->createFile(path);
+            fileTime = now;
         }
 
-        if (nextPartNumber) {
-            Aws::S3::Model::UploadPartRequest request;
-            request.SetBucket(_bucket.c_str());
-            request.SetKey(currentKey.c_str());
-            request.SetPartNumber(nextPartNumber);
-            request.SetUploadId(uploadId);
-
-            Aws::Utils::Array<uint8_t> array(uploadBuffer.data(), uploadBuffer.size());
-            Aws::Utils::Stream::PreallocatedStreamBuf streamBuf(&array, array.GetLength());
-            request.SetBody(std::make_shared<Aws::IOStream>(&streamBuf));
-
-            auto outcome = _s3Client->UploadPart(request);
-            if (outcome.IsSuccess()) {
-                Aws::S3::Model::CompletedPart completedPart;
-                completedPart.SetPartNumber(nextPartNumber);
-                completedPart.SetETag(outcome.GetResult().GetETag());
-                completedUpload.AddParts(completedPart);
-                ++nextPartNumber;
-            } else {
-                _logger.error("unable to upload part: {}: {}", outcome.GetError().GetExceptionName(), outcome.GetError().GetMessage());
+        if (file) {
+            if (!file->write(uploadBuffer.data(), uploadBuffer.size())) {
+                file->close();
+                file = nullptr;
             }
         }
 
@@ -182,5 +129,6 @@ void Archiver::_write(ArchiveDataType type, std::function<void(uint8_t*)> write,
 
         write(&_buffer[offset]);
     }
+
     _cv.notify_one();
 }

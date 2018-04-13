@@ -14,6 +14,7 @@ extern "C" {
 #include "mpeg4.hpp"
 #include "segment_storage.hpp"
 
+// Packager takes incoming audio and video, and synchronously muxes them into MPEG-TS segments.
 class Packager : public EncodedAVReceiver {
 public:
     Packager(Logger logger, SegmentStorage* storage);

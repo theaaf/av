@@ -8,27 +8,37 @@
 
 class Logger {
 public:
-    enum class Destination {
-        Console,
-        Void,
+    struct Field {
+        std::string name;
+        std::string formattedValue;
+    };
+
+    enum class Severity {
+        Info,
+        Warning,
+        Error,
+    };
+
+    struct Destination {
+        virtual void log(Severity severity, const std::string& message, const std::vector<Field>& fields) = 0;
     };
 
     Logger() = default;
-    explicit Logger(Destination destination) : _destination{destination} {}
-
-    template <typename... Args>
-    void error(Args&&... args) const {
-        return _log("\033[1;31mERROR\033[0m", std::forward<Args>(args)...);
-    }
+    Logger(Destination* destination) : _destination{destination} {}
 
     template <typename... Args>
     void info(Args&&... args) const {
-        return _log("\033[1;36mINFO\033[0m", std::forward<Args>(args)...);
+        return _log(Severity::Info, std::forward<Args>(args)...);
     }
 
     template <typename... Args>
     void warn(Args&&... args) const {
-        return _log("\033[1;33mWARN\033[0m", std::forward<Args>(args)...);
+        return _log(Severity::Warning, std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    void error(Args&&... args) const {
+        return _log(Severity::Error, std::forward<Args>(args)...);
     }
 
     Logger with() const { return *this; }
@@ -40,27 +50,17 @@ public:
         return ret.with(std::forward<Rem>(rem)...);
     }
 
-    static const Logger Void;
+    static Destination* const Console;
+    static Destination* const Void;
 
 private:
-    Destination _destination = Destination::Console;;
+    Destination* _destination = Console;
 
-    struct Field {
-        std::string name;
-        std::string formattedValue;
-    };
     std::vector<Field> _fields;
 
     template <typename... Args>
-    void _log(const char* level, Args&&... args) const {
-        if (_destination == Destination::Void) {
-            return;
-        }
+    void _log(Severity severity, Args&&... args) const {
         auto message = fmt::format(std::forward<Args>(args)...);
-        std::string fields;
-        for (auto& f : _fields) {
-            fields += " \033[1;1m" + f.name + "\033[0m=\033[1;1m" + f.formattedValue + "\033[0m";
-        }
-        fmt::print("[{}]{} {}\n", level, fields, message);
+        _destination->log(severity, message, _fields);
     }
 };
