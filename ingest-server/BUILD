@@ -1,6 +1,6 @@
 cc_binary(
     name = "ingest-server",
-    srcs = ["ingest_server.cpp"],
+    srcs = ["main.cpp"],
     deps = [
         "//lib",
         "@args//:args",

@@ -68,6 +68,20 @@ cc_library(
 )
 
 new_http_archive(
+    name = "json",
+    urls = ["https://github.com/nlohmann/json/releases/download/v3.1.2/include.zip"],
+    sha256 = "495362ee1b9d03d9526ba9ccf1b4a9c37691abe3a642ddbced13e5778c16660c",
+    build_file_content = """
+cc_library(
+    name = "json",
+    hdrs = glob(["include/nlohmann/**/*.hpp"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_http_archive(
     name = "openssl",
     url = "https://github.com/openssl/openssl/archive/OpenSSL_1_1_0h.tar.gz",
     sha256 = "f56dd7d81ce8d3e395f83285bd700a1098ed5a4cb0a81ce9522e41e6db7e0389",

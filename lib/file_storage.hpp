@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <string>
 #include <thread>
 
 #include <aws/s3/S3Client.h>
@@ -21,6 +22,8 @@ struct FileStorage {
         virtual bool write(const void* data, size_t len) = 0;
         virtual bool close() = 0;
     };
+
+    virtual std::string uri(const std::string& path) = 0;
 
     // When createFile returns a non-null pointer, callers must call close when they're done with it.
     virtual std::shared_ptr<File> createFile(const std::string& path) = 0;
@@ -50,6 +53,7 @@ public:
         std::FILE* _f;
     };
 
+    virtual std::string uri(const std::string& path) override;
     virtual std::shared_ptr<FileStorage::File> createFile(const std::string& path) override;
 
 private:
@@ -95,6 +99,7 @@ public:
         bool _uploadPart();
     };
 
+    virtual std::string uri(const std::string& path) override;
     virtual std::shared_ptr<FileStorage::File> createFile(const std::string& path) override;
 
 private:
@@ -112,15 +117,23 @@ public:
     void write(std::shared_ptr<std::vector<uint8_t>> data);
     void close();
 
+    // Blocks until the file has been fully written and closed.
+    void wait() const;
+
     // Returns true if the file has been fully written and closed.
-    bool isComplete() const;
+    bool isComplete() const { return _isComplete; }
+
+    // Returns true if no errors have been encounted.
+    bool isHealthy() const { return _isHealthy; }
 
 private:
     std::thread _thread;
-    std::mutex _mutex;
+    mutable std::mutex _mutex;
     std::condition_variable _cv;
+    mutable std::condition_variable _waiterCV;
 
     std::queue<std::shared_ptr<std::vector<uint8_t>>> _writes;
     bool _isClosed = false;
     std::atomic<bool> _isComplete{false};
+    std::atomic<bool> _isHealthy{true};
 };

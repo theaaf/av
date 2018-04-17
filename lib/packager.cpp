@@ -125,7 +125,7 @@ void Packager::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::m
     }
 
     if (isIDR) {
-        _beginSegment();
+        _beginSegment(pts);
     }
 
     if (!_videoStream) {
@@ -153,9 +153,13 @@ void Packager::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::m
     if (err != 0) {
         _logger.error("error writing video frame: {}", FFmpegErrorString(err));
     }
+
+    if (pts > _maxVideoPTS) {
+        _maxVideoPTS = pts;
+    }
 }
 
-void Packager::_beginSegment() {
+void Packager::_beginSegment(std::chrono::microseconds pts) {
     _endSegment();
     InitFFmpeg();
 
@@ -163,7 +167,10 @@ void Packager::_beginSegment() {
         return;
     }
 
-    _logger.info("beginning new segment");
+    _logger.with(
+        "video_height", _videoConfigSPS->FrameCroppingRectangleHeight(),
+        "video_width", _videoConfigSPS->FrameCroppingRectangleWidth()
+    ).info("beginning new segment");
 
     _segment = _storage->createSegment("ts");
     if (!_segment) {
@@ -178,6 +185,8 @@ void Packager::_beginSegment() {
         _endSegment();
         return;
     }
+
+    _segmentPTS = pts;
 
     _audioStream = avformat_new_stream(_outputContext, nullptr);
     _audioStream->codecpar->codec_id = AV_CODEC_ID_AAC;
@@ -238,7 +247,9 @@ void Packager::_endSegment(bool writeTrailer) {
     }
 
     if (_segment) {
-        if (!_segment->close()) {
+        auto duration = _maxVideoPTS - _segmentPTS;
+        _logger.with("duration_ms", std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()).info("closing segment");
+        if (!_segment->close(duration)) {
             _logger.error("unable to close segment");
         }
         _segment = nullptr;

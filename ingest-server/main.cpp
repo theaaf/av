@@ -32,6 +32,8 @@ int main(int argc, const char* argv[]) {
         "Storage URIs can be of the form \"file:my-directory\" or \"s3:my-bucket\"."
     );
     args::HelpFlag help(parser, "help", "display this help", {'h', "help"});
+    args::ValueFlag<std::string> platformURL(parser, "url", "platform url", {"platform-url"});
+    args::ValueFlag<std::string> platformAccessToken(parser, "token", "platform access token", {"platform-access-token"});
     args::ValueFlag<std::shared_ptr<FileStorage>, FileStorageParser> archiveStorage(parser, "uri", "uri to archive to", {"archive-storage"});
     args::ValueFlagList<std::shared_ptr<FileStorage>, std::vector, FileStorageParser> segmentStorage(parser, "uri", "uris to write segments to", {"segment-storage"});
     try {
@@ -46,11 +48,19 @@ int main(int argc, const char* argv[]) {
     }
 
     IngestServer::Configuration configuration;
+
     if (archiveStorage) {
         configuration.archiveFileStorage = args::get(archiveStorage).get();
     }
+
     for (auto storage : segmentStorage) {
         configuration.segmentFileStorage.emplace_back(storage.get());
+    }
+
+    std::unique_ptr<PlatformAPI> platformAPI;
+    if (platformURL) {
+        platformAPI = std::make_unique<PlatformAPI>(args::get(platformURL)+"/api", args::get(platformAccessToken));
+        configuration.platformAPI = platformAPI.get();
     }
 
     IngestServer s{gLogger, configuration};

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 
@@ -44,7 +45,10 @@ private:
     AVStream* _videoStream = nullptr;
     std::shared_ptr<SegmentStorage::Segment> _segment;
 
-    void _beginSegment();
+    std::chrono::microseconds _segmentPTS;
+    std::chrono::microseconds _maxVideoPTS = std::chrono::microseconds::min();
+
+    void _beginSegment(std::chrono::microseconds pts);
     void _endSegment(bool writeTrailer = true);
 
     static int _writePacket(void* opaque, uint8_t* buf, int len);

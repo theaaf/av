@@ -43,6 +43,10 @@ bool LocalFileStorage::File::close() {
     return true;
 }
 
+std::string LocalFileStorage::uri(const std::string& path) {
+    return "file:" + _directory + "/" + path;
+}
+
 std::shared_ptr<FileStorage::File> LocalFileStorage::createFile(const std::string& path) {
     // TODO: eventually we'll be able to use the c++17 filesystem library
     auto filePath = _directory + "/" + path;
@@ -117,6 +121,10 @@ bool S3FileStorage::File::_uploadPart() {
     return true;
 }
 
+std::string S3FileStorage::uri(const std::string& path) {
+    return "s3:" + _bucket + "/" + path;
+}
+
 std::shared_ptr<FileStorage::File> S3FileStorage::createFile(const std::string& path) {
     InitAWS();
 
@@ -152,13 +160,18 @@ AsyncFile::AsyncFile(FileStorage* storage, std::string path) {
             _writes.pop();
             l.unlock();
 
-            f->write(next->data(), next->size());
+            if (!f->write(next->data(), next->size())) {
+                _isHealthy = false;
+            }
 
             l.lock();
         }
 
-        f->close();
+        if (!f->close()) {
+            _isHealthy = false;
+        }
         _isComplete = true;
+        _waiterCV.notify_all();
     });
 }
 
@@ -182,6 +195,9 @@ void AsyncFile::close() {
     _cv.notify_one();
 }
 
-bool AsyncFile::isComplete() const {
-    return _isComplete;
+void AsyncFile::wait() const {
+    std::unique_lock<std::mutex> l{_mutex};
+    while (!_isComplete) {
+        _waiterCV.wait(l);
+    }
 }

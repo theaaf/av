@@ -15,14 +15,16 @@ struct TestSegmentStorage : SegmentStorage {
             return true;
         }
 
-        virtual bool close() override {
+        virtual bool close(std::chrono::microseconds duration) override {
             closed = true;
+            this->duration = duration;
             return true;
         }
 
         std::string extension;
         bool closed = false;
         size_t bytesWritten = 0;
+        std::chrono::microseconds duration;
     };
 
     virtual std::shared_ptr<SegmentStorage::Segment> createSegment(const std::string& extension) override {
@@ -48,6 +50,8 @@ TEST(Packager, packaging) {
 
     for (size_t i = 0; i < storage.segments.size(); ++i) {
         EXPECT_EQ("ts", storage.segments[i]->extension) << "segment " << i << " has unexpected extension";
+        EXPECT_GT(storage.segments[i]->duration, std::chrono::milliseconds(500)) << "segment " << i << " has short duration";
+        EXPECT_LT(storage.segments[i]->duration, std::chrono::seconds(10)) << "segment " << i << " has long duration";
         EXPECT_TRUE(storage.segments[i]->closed) << "segment " << i << " wasn't closed (" << storage.segments.size() << " segments were opened)";
     }
 

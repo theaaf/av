@@ -21,7 +21,7 @@ COPY . .
 RUN bazel test //lib:test
 RUN bazel test //lib/h264:test
 
-RUN bazel build //main:ingest-server
+RUN bazel build ingest-server
 
 FROM ubuntu:16.04
 
@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /opt/av/bin
 
-COPY --from=0 /tmp/av/bazel-bin/main/ingest-server .
+COPY --from=0 /tmp/av/bazel-bin/ingest-server/ingest-server .
 RUN /opt/av/bin/ingest-server --help > /dev/null
 
 ENV PATH "/opt/av/bin:$PATH"

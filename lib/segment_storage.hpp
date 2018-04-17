@@ -8,7 +8,7 @@ struct SegmentStorage {
     // caller.
     struct Segment {
         virtual bool write(const void* data, size_t len) = 0;
-        virtual bool close() = 0;
+        virtual bool close(std::chrono::microseconds duration) = 0;
     };
 
     // createSegment creates a segment with the given extension (such as "ts").

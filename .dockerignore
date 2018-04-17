@@ -2,7 +2,7 @@
 !/.bazelrc
 !/BUILD
 !/build.bzl
+!/ingest-server
 !/lib
-!/main
 !/third-party
 !/WORKSPACE

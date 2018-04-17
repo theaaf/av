@@ -6,11 +6,12 @@ cc_library(
         "@fmt//:fmt",
         "@rtmpdump//:librtmp",
         "@aws//:aws",
+        "@json//:json",
         "//lib/h264:lib",
     ],
     srcs = glob(["*.cpp"], exclude=["*_test.cpp"]),
     hdrs = glob(["*.hpp"], exclude=["*_test.cpp"]),
-    visibility = ["//main:__pkg__"],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(

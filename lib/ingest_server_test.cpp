@@ -7,7 +7,7 @@
 
 TEST(IngestServer, tcpHealthCheck) {
     TestLogDestination logDestination;
-    IngestServer server{&logDestination};
+    IngestServer server{&logDestination, IngestServer::Configuration{}};
     ASSERT_TRUE(server.start(asio::ip::address_v4::loopback(), 1935));
 
     {

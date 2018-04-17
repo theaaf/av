@@ -31,5 +31,9 @@ struct TestFileStorage : FileStorage {
         return f;
     }
 
+    virtual std::string uri(const std::string& path) override {
+        return "test:" + path;
+    }
+
     std::unordered_map<std::string, std::shared_ptr<File>> files;
 };
