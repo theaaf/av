@@ -74,11 +74,11 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
 
 PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::createAVStreamSegmentReplica(const PlatformAPI::AVStreamSegmentReplica& replica) {
     auto query = R"query(
-      mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $location: String!, $durationMilliseconds: Int!) {
+      mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $url: String!, $durationMilliseconds: Int!) {
         createAVStreamSegmentReplica(
           streamId: $streamId,
           segmentNumber: $segmentNumber,
-          location: $location,
+          url: $url,
           durationMilliseconds: $durationMilliseconds,
         ) {
           id
@@ -92,7 +92,7 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::
         {"variables", {
             {"streamId", replica.streamId},
             {"segmentNumber", replica.segmentNumber},
-            {"location", replica.location},
+            {"url", replica.url},
             {"durationMilliseconds", std::chrono::milliseconds(replica.duration).count()},
         }},
     };

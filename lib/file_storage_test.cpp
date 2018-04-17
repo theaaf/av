@@ -63,6 +63,14 @@ TEST(LocalFileStorage, storage) {
     system(("rm -rf " + directory).c_str());
 }
 
+TEST(LocalFileStorage, downloadURL) {
+    TestLogDestination logDestination;
+    LocalFileStorage storage(&logDestination, "segments");
+    auto downloadURL = storage.downloadURL("foo");
+    EXPECT_EQ(0, downloadURL.find("http://127.0.0.1:"));
+    EXPECT_EQ(downloadURL.size() - 4, downloadURL.find("/foo"));
+}
+
 // Creates an S3 client that connects to the Minio container started via `docker-compose up minio`.
 std::shared_ptr<Aws::S3::S3Client> MinioS3Client(const char* bucket) {
     InitAWS();
@@ -130,6 +138,12 @@ TEST(S3FileStorage, storage) {
         auto outcome = client->GetObject(Aws::S3::Model::GetObjectRequest{}.WithBucket(bucket).WithKey("foo"));
         ASSERT_TRUE(outcome.IsSuccess());
     }
+}
+
+TEST(S3FileStorage, downloadURL) {
+    TestLogDestination logDestination;
+    S3FileStorage storage(&logDestination, "bucket");
+    EXPECT_EQ("https://s3.amazonaws.com/bucket/foo", storage.downloadURL("foo"));
 }
 
 TEST(AsyncFile, file) {

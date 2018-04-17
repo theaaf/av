@@ -15,7 +15,7 @@ std::shared_ptr<EncodedAVReceiver> IngestServer::authenticate(const std::string&
         // TODO: these hard-coded things will be parameterized as transcoding configuration
         PlatformAPI::AVStream stream;
         stream.bitrate = 4000000;
-        stream.codecs = {};
+        stream.codecs = {"mp4a.40.2", "avc1.64001f"};
         stream.maximumSegmentDuration = std::chrono::seconds(30);
         stream.videoHeight = 1120;
         stream.videoWidth = 700;

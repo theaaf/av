@@ -12,9 +12,9 @@ TEST(DefaultHTTPClient, request) {
     req.body = "baz";
 
     auto resp = DefaultHTTPClient->request(req);
-    EXPECT_EQ(200, resp.statusCode);
-    EXPECT_TRUE(resp.body.find("\"Foo\": \"bar\"") != std::string::npos) << resp.body;
-    EXPECT_TRUE(resp.body.find("\"baz\"") != std::string::npos) << resp.body;
+    ASSERT_EQ(200, resp.statusCode);
+    EXPECT_NE(std::string::npos, resp.body.find("\"Foo\": \"bar\"")) << resp.body;
+    EXPECT_NE(std::string::npos, resp.body.find("\"baz\"")) << resp.body;
 }
 
 TEST(DefaultHTTPClient, badDomainRequest) {

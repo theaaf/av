@@ -1,6 +1,8 @@
 #include "file_storage.hpp"
 
 #include <cstdlib>
+#include <fstream>
+#include <unordered_map>
 
 #include "aws.hpp"
 
@@ -27,6 +29,54 @@ std::shared_ptr<FileStorage> FileStorageForURI(Logger logger, const std::string&
     return nullptr;
 }
 
+static std::unordered_map<std::string, std::string> _mimeTypes = {
+    {"ts", "video/MP2T"},
+};
+
+LocalFileStorage::LocalFileStorage(Logger logger, std::string directory) : _logger{std::move(logger)}, _directory{std::move(directory)} {
+    io_service = std::make_shared<asio::io_service>();
+    config.address = "127.0.0.1";
+    config.port = 0;
+    default_resource["GET"] = [this](std::shared_ptr<Response> response, std::shared_ptr<Request> request) {
+        if (request->path.find("..") != std::string::npos) {
+            response->write(SimpleWeb::StatusCode::client_error_not_found, "not found");
+            return;
+        }
+
+        std::ifstream f{_directory + "/" + request->path, std::ios::in | std::ios::binary};
+        if (!f.is_open()) {
+            response->write(SimpleWeb::StatusCode::client_error_not_found, "not found");
+            return;
+        }
+
+        SimpleWeb::CaseInsensitiveMultimap headers;
+
+        std::string ext;
+        auto period = request->path.rfind(".");
+        if (period != std::string::npos) {
+            ext = request->path.substr(period + 1);
+        }
+        if (_mimeTypes.count(ext) > 0) {
+            headers.emplace("Content-Type", _mimeTypes[ext]);
+        } else {
+            headers.emplace("Content-Type", "application/octet-stream");
+        }
+
+        response->write(f, headers);
+    };
+    start();
+    _serverPort = acceptor->local_endpoint().port();
+    logger.with("directory", _directory, "port", _serverPort).info("local file storage server started");
+    _serverThread = std::thread([this] {
+        io_service->run();
+    });
+}
+
+LocalFileStorage::~LocalFileStorage() {
+    stop();
+    _serverThread.join();
+}
+
 bool LocalFileStorage::File::write(const void* data, size_t len) {
     if (std::fwrite(data, len, 1, _f) != 1) {
         _logger.error("unable to write to file");
@@ -43,8 +93,8 @@ bool LocalFileStorage::File::close() {
     return true;
 }
 
-std::string LocalFileStorage::uri(const std::string& path) {
-    return "file:" + _directory + "/" + path;
+std::string LocalFileStorage::downloadURL(const std::string& path) {
+    return "http://127.0.0.1:" + std::to_string(_serverPort) + "/" + path;
 }
 
 std::shared_ptr<FileStorage::File> LocalFileStorage::createFile(const std::string& path) {
@@ -121,8 +171,8 @@ bool S3FileStorage::File::_uploadPart() {
     return true;
 }
 
-std::string S3FileStorage::uri(const std::string& path) {
-    return "s3:" + _bucket + "/" + path;
+std::string S3FileStorage::downloadURL(const std::string& path) {
+    return "https://s3.amazonaws.com/" + _bucket + "/" + path;
 }
 
 std::shared_ptr<FileStorage::File> S3FileStorage::createFile(const std::string& path) {

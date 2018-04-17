@@ -44,7 +44,7 @@ public:
     struct AVStreamSegmentReplica {
         std::string streamId;
         int64_t segmentNumber = 0;
-        std::string location;
+        std::string url;
         std::chrono::milliseconds duration;
     };
 

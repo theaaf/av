@@ -12,6 +12,8 @@
 #include <aws/s3/S3Client.h>
 #include <aws/s3/model/CompletedMultipartUpload.h>
 
+#include <simple-web-server/server_http.hpp>
+
 #include "aws.hpp"
 #include "logger.hpp"
 
@@ -23,7 +25,7 @@ struct FileStorage {
         virtual bool close() = 0;
     };
 
-    virtual std::string uri(const std::string& path) = 0;
+    virtual std::string downloadURL(const std::string& path) = 0;
 
     // When createFile returns a non-null pointer, callers must call close when they're done with it.
     virtual std::shared_ptr<File> createFile(const std::string& path) = 0;
@@ -33,12 +35,12 @@ struct FileStorage {
 // FileStorage instance for it.
 std::shared_ptr<FileStorage> FileStorageForURI(Logger logger, const std::string& uri);
 
-class LocalFileStorage : public FileStorage {
+// LocalFileStorage is a FileStorage implementation intended primarily for testing. It writes files
+// to a directory on your local disk and runs an HTTP server that exposes them via loopback address.
+class LocalFileStorage : public FileStorage, private SimpleWeb::Server<SimpleWeb::HTTP> {
 public:
-    explicit LocalFileStorage(Logger logger, std::string directory)
-        : _logger{std::move(logger)}, _directory{std::move(directory)} {}
-
-    virtual ~LocalFileStorage() {}
+    LocalFileStorage(Logger logger, std::string directory);
+    virtual ~LocalFileStorage();
 
     class File : public FileStorage::File {
     public:
@@ -53,12 +55,14 @@ public:
         std::FILE* _f;
     };
 
-    virtual std::string uri(const std::string& path) override;
+    virtual std::string downloadURL(const std::string& path) override;
     virtual std::shared_ptr<FileStorage::File> createFile(const std::string& path) override;
 
 private:
     const Logger _logger;
     const std::string _directory;
+    int _serverPort = 0;
+    std::thread _serverThread;
 };
 
 class S3FileStorage : public FileStorage {
@@ -99,7 +103,7 @@ public:
         bool _uploadPart();
     };
 
-    virtual std::string uri(const std::string& path) override;
+    virtual std::string downloadURL(const std::string& path) override;
     virtual std::shared_ptr<FileStorage::File> createFile(const std::string& path) override;
 
 private:

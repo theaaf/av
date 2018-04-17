@@ -31,7 +31,7 @@ struct TestFileStorage : FileStorage {
         return f;
     }
 
-    virtual std::string uri(const std::string& path) override {
+    virtual std::string downloadURL(const std::string& path) override {
         return "test:" + path;
     }
 

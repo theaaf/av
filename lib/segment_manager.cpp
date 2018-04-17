@@ -26,15 +26,15 @@ std::shared_ptr<SegmentStorage::Segment> SegmentManager::createSegment(const std
 
 SegmentManager::Segment::Segment(Logger logger, const SegmentManager::Configuration& configuration, const std::string& path, int64_t segmentNumber) {
     for (auto fs : configuration.storage) {
-        auto uri = fs->uri(path);
+        auto url = fs->downloadURL(path);
         Replica replica;
         replica.file = std::make_shared<AsyncFile>(fs, path);
         replica.thread = std::thread([
                 this,
                 file = replica.file,
-                uri,
+                url,
                 segmentNumber,
-                logger = logger.with("uri", uri),
+                logger = logger.with("url", url),
                 configuration
         ]{
             file->wait();
@@ -47,7 +47,7 @@ SegmentManager::Segment::Segment(Logger logger, const SegmentManager::Configurat
                 PlatformAPI::AVStreamSegmentReplica replica;
                 replica.streamId = configuration.streamId;
                 replica.segmentNumber = segmentNumber;
-                replica.location = uri;
+                replica.url = url;
                 replica.duration = std::chrono::duration_cast<decltype(replica.duration)>(_duration);
 
                 auto result = configuration.platformAPI->createAVStreamSegmentReplica(replica);

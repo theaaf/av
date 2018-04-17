@@ -37,6 +37,23 @@ cc_library(
 )
 
 new_http_archive(
+    name = "simple_web_server",
+    urls = ["https://github.com/eidheim/Simple-Web-Server/archive/bd9c1192bba119ca34eb01e2ad1e0d979c5514c5.tar.gz"],
+    sha256 = "cda4d9a9ba120424d91b11247f087e400a020a9e057d754966d0df4b0d8049d8",
+    strip_prefix = "Simple-Web-Server-bd9c1192bba119ca34eb01e2ad1e0d979c5514c5",
+    build_file_content = """
+cc_library(
+    name = "lib",
+    hdrs = glob(["*.hpp"]),
+    includes = ["."],
+    include_prefix = "simple-web-server",
+    defines = ["USE_STANDALONE_ASIO=1"],
+    visibility = ["//visibility:public"],
+)
+""",
+)
+
+new_http_archive(
     name = "fmt",
     urls = ["https://github.com/fmtlib/fmt/archive/4.1.0.tar.gz"],
     sha256 = "46628a2f068d0e33c716be0ed9dcae4370242df135aed663a180b9fd8e36733d",

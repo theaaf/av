@@ -57,7 +57,7 @@ TEST(PlatformAPI, createAVStreamSegmentReplica) {
     PlatformAPI::AVStreamSegmentReplica replica;
     replica.streamId = "stream-id";
     replica.segmentNumber = 1;
-    replica.location = "s3:bucket/foo";
+    replica.url = "http://foo/bar";
     replica.duration = std::chrono::milliseconds(123);
 
     auto result = api.createAVStreamSegmentReplica(replica);

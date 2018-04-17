@@ -7,6 +7,7 @@ cc_library(
         "@rtmpdump//:librtmp",
         "@aws//:aws",
         "@json//:json",
+        "@simple_web_server//:lib",
         "//lib/h264:lib",
     ],
     srcs = glob(["*.cpp"], exclude=["*_test.cpp"]),
