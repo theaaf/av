@@ -8,6 +8,7 @@
 
 #include "logger.hpp"
 
+// TestLogDestination is a silent log destination that creates Google Test failures when warnings or errors are logged.
 class TestLogDestination : public Logger::Destination {
 public:
     virtual ~TestLogDestination() {
@@ -30,7 +31,7 @@ private:
                 for (auto& field : std::get<std::vector<Logger::Field>>(e)) {
                     output += ", " + field.name + "=" + field.formattedValue;
                 }
-                FAIL() << output;
+                ADD_FAILURE() << output;
             }
         }
     }

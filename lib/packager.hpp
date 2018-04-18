@@ -10,21 +10,21 @@ extern "C" {
 
 #include <h264/seq_parameter_set.hpp>
 
-#include "encoded_av_receiver.hpp"
+#include "encoded_av_handler.hpp"
 #include "logger.hpp"
 #include "mpeg4.hpp"
 #include "segment_storage.hpp"
 
 // Packager takes incoming audio and video, and synchronously muxes them into MPEG-TS segments.
-class Packager : public EncodedAVReceiver {
+class Packager : public EncodedAVHandler {
 public:
     Packager(Logger logger, SegmentStorage* storage);
     virtual ~Packager();
 
-    virtual void receiveEncodedAudioConfig(const void* data, size_t len) override;
-    virtual void receiveEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) override;
-    virtual void receiveEncodedVideoConfig(const void* data, size_t len) override;
-    virtual void receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
+    virtual void handleEncodedAudioConfig(const void* data, size_t len) override;
+    virtual void handleEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) override;
+    virtual void handleEncodedVideoConfig(const void* data, size_t len) override;
+    virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
 
 private:
     const Logger _logger;

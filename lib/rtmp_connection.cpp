@@ -43,16 +43,21 @@ struct RTMPLogger {
         RTMP_LogSetCallback(&Callback);
     }
 
-    static void Callback(int level, const char* format, va_list arg) {
+    static void Callback(int level, const char* format, va_list args) {
         char buf[500];
-        auto n = vsnprintf(buf, sizeof(buf), format, arg);
+
+        va_list tmp;
+        va_copy(tmp, args);
+        auto n = vsnprintf(buf, sizeof(buf), format, tmp);
+        va_end(tmp);
+
         if (n < 0) {
             Logger{}.error("rtmp log error: {}", format);
         } else if (static_cast<size_t>(n) < sizeof(buf)) {
             Log(level, buf);
         } else {
             auto buf = std::vector<char>(n+1);
-            vsnprintf(&buf[0], buf.size(), format, arg);
+            vsnprintf(&buf[0], buf.size(), format, args);
             Log(level, buf.data());
         }
     }
@@ -61,13 +66,13 @@ struct RTMPLogger {
         switch (level) {
         case RTMP_LOGCRIT:
         case RTMP_LOGERROR:
-            Logger{}.error("rtmp: {}", str);
+            Logger{}.error("[rtmp] {}", str);
             break;
         case RTMP_LOGWARNING:
-            Logger{}.warn("rtmp: {}", str);
+            Logger{}.warn("[rtmp] {}", str);
             break;
         case RTMP_LOGINFO:
-            Logger{}.info("rtmp: {}", str);
+            Logger{}.info("[rtmp] {}", str);
             break;
         }
     }
@@ -83,7 +88,7 @@ void RTMPConnection::run(int fd, asio::ip::tcp::endpoint remote) {
     }
 
     _logger = _logger.with("connection_id", _connectionId);
-    _logger.with("remote", remote).info("received rtmp connection");
+    _logger.with("remote", remote).info("handled rtmp connection");
 
     RTMP* rtmp = RTMP_Alloc();
     RTMP_Init(rtmp);
@@ -147,8 +152,8 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
     auto txn = AMFProp_GetNumber(AMF_GetProp(&obj, nullptr, 1));
 
     if (AVMATCH(&method, &av_connect)) {
-        if (_avReceiver) {
-            _logger.error("second connect received");
+        if (_avHandler) {
+            _logger.error("second connect handled");
             return false;
         }
 
@@ -161,12 +166,12 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
 
             if (cobj.o_props[i].p_type == AMF_STRING) {
                 string = cobj.o_props[i].p_vu.p_aval;
-                _logger.with("key", pname, "value", string).info("received connect property");
+                _logger.with("key", pname, "value", string).info("handled connect property");
             } else if (cobj.o_props[i].p_type == AMF_NUMBER) {
                 number = cobj.o_props[i].p_vu.p_number;
-                _logger.with("key", pname, "value", number).info("received connect property");
+                _logger.with("key", pname, "value", number).info("handled connect property");
             } else {
-                _logger.with("key", pname).info("received connect object property");
+                _logger.with("key", pname).info("handled connect object property");
             }
 
             if (AVMATCH(&pname, &av_objectEncoding)) {
@@ -174,8 +179,8 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
             }
         }
 
-        _avReceiver = _delegate->authenticate(_connectionId);
-        if (!_avReceiver) {
+        _avHandler = _delegate->authenticate(_connectionId);
+        if (!_avHandler) {
             _logger.info("authentication failed");
             return false;
         }
@@ -192,7 +197,7 @@ bool RTMPConnection::_serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* bo
         AVal name, type;
         AMFProp_GetString(AMF_GetProp(&obj, nullptr, 3), &name);
         AMFProp_GetString(AMF_GetProp(&obj, nullptr, 4), &type);
-        _logger.with("name", name, "type", type).info("received publish");
+        _logger.with("name", name, "type", type).info("handled publish");
         return _sendOnStatus(rtmp, packet->m_nInfoField2, &av_NetStream_Publish_Start, &av_started_publishing);
     } else {
         _logger.warn("unknown invoke method: {}", method);
@@ -211,7 +216,7 @@ bool RTMPConnection::_servePacket(RTMP* rtmp, RTMPPacket* packet) {
     case RTMP_PACKET_TYPE_INVOKE:
         return _serveInvoke(rtmp, packet, packet->m_body, packet->m_nBodySize);
     case RTMP_PACKET_TYPE_AUDIO:
-        if (!_avReceiver || packet->m_nBodySize < 2 || static_cast<uint8_t>(packet->m_body[0]) != 0xaf) {
+        if (!_avHandler || packet->m_nBodySize < 2 || static_cast<uint8_t>(packet->m_body[0]) != 0xaf) {
             _logger.error("invalid audio packet");
             return false;
         } else if (packet->m_body[1] == 0) {
@@ -224,15 +229,15 @@ bool RTMPConnection::_servePacket(RTMP* rtmp, RTMPPacket* packet) {
                 "object_type", config.objectType,
                 "frequency", config.frequency,
                 "channel_configuration", config.channelConfiguration
-            ).info("received audio config");
-            _avReceiver->receiveEncodedAudioConfig(packet->m_body + 2, packet->m_nBodySize - 2);
+            ).info("handled audio config");
+            _avHandler->handleEncodedAudioConfig(packet->m_body + 2, packet->m_nBodySize - 2);
         } else if (packet->m_body[1] == 1) {
             auto pts = std::chrono::milliseconds{packet->m_nTimeStamp};
-            _avReceiver->receiveEncodedAudio(pts, packet->m_body + 2, packet->m_nBodySize - 2);
+            _avHandler->handleEncodedAudio(pts, packet->m_body + 2, packet->m_nBodySize - 2);
         }
         return true;
     case RTMP_PACKET_TYPE_VIDEO: {
-        if (!_avReceiver || packet->m_nBodySize < 5 || (packet->m_body[0] & 0x0f) != 0x07) {
+        if (!_avHandler || packet->m_nBodySize < 5 || (packet->m_body[0] & 0x0f) != 0x07) {
             _logger.error("invalid video packet");
             return false;
         }
@@ -248,17 +253,17 @@ bool RTMPConnection::_servePacket(RTMP* rtmp, RTMPPacket* packet) {
                 "profile", config.avcProfileIndication,
                 "level", config.avcLevelIndication,
                 "length_size", config.lengthSizeMinusOne + 1
-            ).info("received video config");
-            _avReceiver->receiveEncodedVideoConfig(packet->m_body + 5, packet->m_nBodySize - 5);
+            ).info("handled video config");
+            _avHandler->handleEncodedVideoConfig(packet->m_body + 5, packet->m_nBodySize - 5);
         } else if (packet->m_body[1] == 1) {
             auto dts = std::chrono::milliseconds{packet->m_nTimeStamp};
             auto pts = dts + compositionTimeOffset;
-            _avReceiver->receiveEncodedVideo(pts, dts, packet->m_body + 5, packet->m_nBodySize - 5);
+            _avHandler->handleEncodedVideo(pts, dts, packet->m_body + 5, packet->m_nBodySize - 5);
         }
         return true;
     }
     default:
-        _logger.warn("received unknown rtmp packet type {}", packet->m_packetType);
+        _logger.warn("handled unknown rtmp packet type {}", packet->m_packetType);
     }
     return true;
 }

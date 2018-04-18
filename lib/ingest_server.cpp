@@ -1,6 +1,6 @@
 #include "ingest_server.hpp"
 
-std::shared_ptr<EncodedAVReceiver> IngestServer::authenticate(const std::string& connectionId) {
+std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& connectionId) {
     auto logger = _logger.with("connection_id", connectionId);
 
     if (!_configuration.platformAPI) {
@@ -44,7 +44,7 @@ IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, 
             configuration.archiveFileStorage,
             connectionId + "/{:010}"
         );
-        addReceiver(_archiver.get());
+        addHandler(_archiver.get());
     }
 
     if (!configuration.segmentFileStorage.empty()) {
@@ -56,6 +56,6 @@ IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, 
         smConfig.streamId = streamId;
         _segmentManager = std::make_unique<SegmentManager>(logger, smConfig);
         _packager = std::make_unique<Packager>(logger, _segmentManager.get());
-        addReceiver(_packager.get());
+        addHandler(_packager.get());
     }
 }

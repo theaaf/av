@@ -60,8 +60,8 @@ genrule(
                 --disable-swscale \
                 --disable-swresample \
                 --enable-muxer=mpegts \
+                --enable-decoder=h264 \
                 --enable-encoder=aac \
-                --enable-bsf=h264_mp4toannexb \
             && make
         popd
         cp $$FFMPEG_ROOT/config.h $(location config.h)

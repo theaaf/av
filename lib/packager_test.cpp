@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "encoded_av_receiver_test.hpp"
+#include "encoded_av_handler_test.hpp"
 #include "logger_test.hpp"
 #include "packager.hpp"
 #include "utility.hpp"
@@ -43,7 +43,7 @@ TEST(Packager, packaging) {
 
     {
         Packager packager{&logDestination, &storage};
-        ExerciseEncodedAVReceiver(&packager);
+        ExerciseEncodedAVHandler(&packager);
     }
 
     EXPECT_GT(storage.segments.size(), 2);

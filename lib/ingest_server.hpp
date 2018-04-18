@@ -29,7 +29,7 @@ public:
 
     virtual ~IngestServer() {}
 
-    virtual std::shared_ptr<EncodedAVReceiver> authenticate(const std::string& connectionId) override;
+    virtual std::shared_ptr<EncodedAVHandler> authenticate(const std::string& connectionId) override;
 
 private:
     const Logger _logger;

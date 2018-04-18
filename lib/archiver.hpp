@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-#include "encoded_av_receiver.hpp"
+#include "encoded_av_handler.hpp"
 #include "file_storage.hpp"
 #include "logger.hpp"
 
@@ -16,7 +16,7 @@ enum class ArchiveDataType : uint8_t {
     Video,
 };
 
-class Archiver : public EncodedAVReceiver {
+class Archiver : public EncodedAVHandler {
 public:
     // Creates an archiver that uploads to the specified storage with the specified path format. The
     // key format will be given an integer that will increment for each file uploaded. For example,
@@ -24,10 +24,10 @@ public:
     Archiver(Logger logger, FileStorage* storage, std::string pathFormat);
     virtual ~Archiver();
 
-    virtual void receiveEncodedAudioConfig(const void* data, size_t len) override;
-    virtual void receiveEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) override;
-    virtual void receiveEncodedVideoConfig(const void* data, size_t len) override;
-    virtual void receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
+    virtual void handleEncodedAudioConfig(const void* data, size_t len) override;
+    virtual void handleEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) override;
+    virtual void handleEncodedVideoConfig(const void* data, size_t len) override;
+    virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
 
 private:
     const Logger _logger;

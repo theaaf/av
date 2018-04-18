@@ -21,7 +21,7 @@ Packager::~Packager() {
     av_free(_ioContextBuffer);
 }
 
-void Packager::receiveEncodedAudioConfig(const void* data, size_t len) {
+void Packager::handleEncodedAudioConfig(const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};
 
     auto config = std::make_unique<MPEG4AudioSpecificConfig>();
@@ -36,7 +36,7 @@ void Packager::receiveEncodedAudioConfig(const void* data, size_t len) {
     _audioConfig = std::move(config);
 }
 
-void Packager::receiveEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) {
+void Packager::handleEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};
     if (!_audioConfig || !_audioStream) {
         return;
@@ -61,7 +61,7 @@ void Packager::receiveEncodedAudio(std::chrono::microseconds pts, const void* da
     }
 }
 
-void Packager::receiveEncodedVideoConfig(const void* data, size_t len) {
+void Packager::handleEncodedVideoConfig(const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};
 
     auto config = std::make_unique<AVCDecoderConfigurationRecord>();
@@ -106,7 +106,7 @@ void Packager::receiveEncodedVideoConfig(const void* data, size_t len) {
     _videoConfigSPS = std::move(configSPS);
 }
 
-void Packager::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {
+void Packager::handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};
     if (!_videoConfig) {
         return;

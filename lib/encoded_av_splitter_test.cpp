@@ -1,71 +1,71 @@
 #include <gtest/gtest.h>
 
 #include "encoded_av_splitter.hpp"
-#include "encoded_av_receiver_test.hpp"
+#include "encoded_av_handler_test.hpp"
 
 TEST(EncodedAudioSplitter, splitting) {
-    TestEncodedAVReceiver receiverA, receiverB;
+    TestEncodedAVHandler handlerA, handlerB;
 
-    EncodedAudioSplitter splitter(&receiverA, &receiverB);
+    EncodedAudioSplitter splitter(&handlerA, &handlerB);
 
-    splitter.receiveEncodedAudioConfig("foo", 3);
-    EXPECT_EQ(1, receiverA.receivedAudioConfig.size());
-    EXPECT_EQ(1, receiverB.receivedAudioConfig.size());
+    splitter.handleEncodedAudioConfig("foo", 3);
+    EXPECT_EQ(1, handlerA.handledAudioConfig.size());
+    EXPECT_EQ(1, handlerB.handledAudioConfig.size());
 
-    splitter.receiveEncodedAudio(std::chrono::microseconds(1), "bar", 3);
-    EXPECT_EQ(1, receiverA.receivedAudio.size());
-    EXPECT_EQ(1, receiverB.receivedAudio.size());
+    splitter.handleEncodedAudio(std::chrono::microseconds(1), "bar", 3);
+    EXPECT_EQ(1, handlerA.handledAudio.size());
+    EXPECT_EQ(1, handlerB.handledAudio.size());
 
-    splitter.receiveEncodedAudio(std::chrono::microseconds(2), "baz", 3);
-    EXPECT_EQ(2, receiverA.receivedAudio.size());
-    EXPECT_EQ(2, receiverB.receivedAudio.size());
+    splitter.handleEncodedAudio(std::chrono::microseconds(2), "baz", 3);
+    EXPECT_EQ(2, handlerA.handledAudio.size());
+    EXPECT_EQ(2, handlerB.handledAudio.size());
 }
 
 TEST(EncodedVideoSplitter, splitting) {
-    TestEncodedAVReceiver receiverA, receiverB;
+    TestEncodedAVHandler handlerA, handlerB;
 
-    EncodedVideoSplitter splitter(&receiverA, &receiverB);
+    EncodedVideoSplitter splitter(&handlerA, &handlerB);
 
-    splitter.receiveEncodedVideoConfig("foo", 3);
-    EXPECT_EQ(1, receiverA.receivedVideoConfig.size());
-    EXPECT_EQ(1, receiverB.receivedVideoConfig.size());
+    splitter.handleEncodedVideoConfig("foo", 3);
+    EXPECT_EQ(1, handlerA.handledVideoConfig.size());
+    EXPECT_EQ(1, handlerB.handledVideoConfig.size());
 
-    splitter.receiveEncodedVideo(std::chrono::microseconds(1), std::chrono::microseconds(1), "bar", 3);
-    EXPECT_EQ(1, receiverA.receivedVideo.size());
-    EXPECT_EQ(1, receiverB.receivedVideo.size());
+    splitter.handleEncodedVideo(std::chrono::microseconds(1), std::chrono::microseconds(1), "bar", 3);
+    EXPECT_EQ(1, handlerA.handledVideo.size());
+    EXPECT_EQ(1, handlerB.handledVideo.size());
 
-    splitter.receiveEncodedVideo(std::chrono::microseconds(2), std::chrono::microseconds(2), "baz", 3);
-    EXPECT_EQ(2, receiverA.receivedVideo.size());
-    EXPECT_EQ(2, receiverB.receivedVideo.size());
+    splitter.handleEncodedVideo(std::chrono::microseconds(2), std::chrono::microseconds(2), "baz", 3);
+    EXPECT_EQ(2, handlerA.handledVideo.size());
+    EXPECT_EQ(2, handlerB.handledVideo.size());
 }
 
 TEST(EncodedAVSplitter, splitting) {
-    TestEncodedAVReceiver receiverA, receiverB;
+    TestEncodedAVHandler handlerA, handlerB;
 
-    EncodedAVSplitter splitter(&receiverA, &receiverB);
-    EncodedAVReceiver* abstractSplitter{&splitter};
+    EncodedAVSplitter splitter(&handlerA, &handlerB);
+    EncodedAVHandler* abstractSplitter{&splitter};
 
-    abstractSplitter->receiveEncodedAudioConfig("foo", 3);
-    EXPECT_EQ(1, receiverA.receivedAudioConfig.size());
-    EXPECT_EQ(1, receiverB.receivedAudioConfig.size());
+    abstractSplitter->handleEncodedAudioConfig("foo", 3);
+    EXPECT_EQ(1, handlerA.handledAudioConfig.size());
+    EXPECT_EQ(1, handlerB.handledAudioConfig.size());
 
-    abstractSplitter->receiveEncodedAudio(std::chrono::microseconds(1), "bar", 3);
-    EXPECT_EQ(1, receiverA.receivedAudio.size());
-    EXPECT_EQ(1, receiverB.receivedAudio.size());
+    abstractSplitter->handleEncodedAudio(std::chrono::microseconds(1), "bar", 3);
+    EXPECT_EQ(1, handlerA.handledAudio.size());
+    EXPECT_EQ(1, handlerB.handledAudio.size());
 
-    abstractSplitter->receiveEncodedAudio(std::chrono::microseconds(2), "baz", 3);
-    EXPECT_EQ(2, receiverA.receivedAudio.size());
-    EXPECT_EQ(2, receiverB.receivedAudio.size());
+    abstractSplitter->handleEncodedAudio(std::chrono::microseconds(2), "baz", 3);
+    EXPECT_EQ(2, handlerA.handledAudio.size());
+    EXPECT_EQ(2, handlerB.handledAudio.size());
 
-    abstractSplitter->receiveEncodedVideoConfig("foo", 3);
-    EXPECT_EQ(1, receiverA.receivedVideoConfig.size());
-    EXPECT_EQ(1, receiverB.receivedVideoConfig.size());
+    abstractSplitter->handleEncodedVideoConfig("foo", 3);
+    EXPECT_EQ(1, handlerA.handledVideoConfig.size());
+    EXPECT_EQ(1, handlerB.handledVideoConfig.size());
 
-    abstractSplitter->receiveEncodedVideo(std::chrono::microseconds(1), std::chrono::microseconds(1), "bar", 3);
-    EXPECT_EQ(1, receiverA.receivedVideo.size());
-    EXPECT_EQ(1, receiverB.receivedVideo.size());
+    abstractSplitter->handleEncodedVideo(std::chrono::microseconds(1), std::chrono::microseconds(1), "bar", 3);
+    EXPECT_EQ(1, handlerA.handledVideo.size());
+    EXPECT_EQ(1, handlerB.handledVideo.size());
 
-    abstractSplitter->receiveEncodedVideo(std::chrono::microseconds(2), std::chrono::microseconds(2), "baz", 3);
-    EXPECT_EQ(2, receiverA.receivedVideo.size());
-    EXPECT_EQ(2, receiverB.receivedVideo.size());
+    abstractSplitter->handleEncodedVideo(std::chrono::microseconds(2), std::chrono::microseconds(2), "baz", 3);
+    EXPECT_EQ(2, handlerA.handledVideo.size());
+    EXPECT_EQ(2, handlerB.handledVideo.size());
 }

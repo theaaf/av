@@ -12,7 +12,7 @@ TEST(Archiver, archiving) {
         Archiver archiver{&logDestination, &storage, "foo/{}"};
         std::vector<uint8_t> kilobyte(1024, 1);
         for (int i = 0; i < 30 * 1024; ++i) {
-            archiver.receiveEncodedAudioConfig(kilobyte.data(), kilobyte.size());
+            archiver.handleEncodedAudioConfig(kilobyte.data(), kilobyte.size());
         }
     }
 

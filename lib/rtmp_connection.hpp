@@ -4,13 +4,13 @@
 
 #include "librtmp/rtmp.h"
 
-#include "encoded_av_receiver.hpp"
+#include "encoded_av_handler.hpp"
 #include "logger.hpp"
 
 struct RTMPConnectionDelegate {
     virtual ~RTMPConnectionDelegate() {}
 
-    virtual std::shared_ptr<EncodedAVReceiver> authenticate(const std::string& connectionId) = 0;
+    virtual std::shared_ptr<EncodedAVHandler> authenticate(const std::string& connectionId) = 0;
 };
 
 class RTMPConnection {
@@ -28,7 +28,7 @@ private:
     std::atomic<bool> _shouldReturn{false};
 
     uint32_t _nextStreamId{1};
-    std::shared_ptr<EncodedAVReceiver> _avReceiver;
+    std::shared_ptr<EncodedAVHandler> _avHandler;
 
     void _serveRTMP(RTMP* rtmp);
     bool _serveInvoke(RTMP* rtmp, RTMPPacket* packet, const char* body, size_t len);

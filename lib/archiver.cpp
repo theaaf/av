@@ -17,13 +17,13 @@ Archiver::~Archiver() {
     _thread.join();
 }
 
-void Archiver::receiveEncodedAudioConfig(const void* data, size_t len) {
+void Archiver::handleEncodedAudioConfig(const void* data, size_t len) {
     _write(ArchiveDataType::AudioConfig, [&](uint8_t* dest) {
         std::memcpy(dest, data, len);
     }, len);
 }
 
-void Archiver::receiveEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) {
+void Archiver::handleEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) {
     _write(ArchiveDataType::Audio, [&](uint8_t* dest) {
         for (int i = 0; i < 8; ++i) {
             *(dest++) = (pts.count() >> ((7 - i) * 8)) & 0xff;
@@ -32,13 +32,13 @@ void Archiver::receiveEncodedAudio(std::chrono::microseconds pts, const void* da
     }, len + 8);
 }
 
-void Archiver::receiveEncodedVideoConfig(const void* data, size_t len) {
+void Archiver::handleEncodedVideoConfig(const void* data, size_t len) {
     _write(ArchiveDataType::VideoConfig, [&](uint8_t* dest) {
         std::memcpy(dest, data, len);
     }, len);
 }
 
-void Archiver::receiveEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {
+void Archiver::handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {
     _write(ArchiveDataType::Video, [&](uint8_t* dest) {
         for (int i = 0; i < 8; ++i) {
             *(dest++) = (pts.count() >> ((7 - i) * 8)) & 0xff;
