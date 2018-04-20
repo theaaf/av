@@ -17,6 +17,7 @@ namespace ProfileIDC {
 namespace NALUnitType {
     constexpr unsigned int IDRSlice = 5;
     constexpr unsigned int SequenceParameterSet = 7;
+    constexpr unsigned int PictureParameterSet = 8;
 }
 
 // ITU-T H.264, 04/2017, 7.2
@@ -86,7 +87,11 @@ struct se {
 };
 
 bool IterateAVCC(const void* data, size_t len, size_t naluSizeLength, const std::function<void(const void* data, size_t len)>& f);
+bool IterateAnnexB(const void* data, size_t len, const std::function<void(const void* data, size_t len)>& f);
 
 bool AVCCToAnnexB(std::vector<uint8_t>* dest, const void* data, size_t len, size_t naluSizeLength);
+
+// AnnexBToAVCC converts AnnexB to AVCC with a NALU size length of 4.
+bool AnnexBToAVCC(std::vector<uint8_t>* dest, const void* data, size_t len);
 
 } // namespace h264

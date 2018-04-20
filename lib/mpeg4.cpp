@@ -173,3 +173,30 @@ bool AVCDecoderConfigurationRecord::decode(const void* data, size_t len) {
 
     return true;
 }
+
+std::vector<uint8_t> AVCDecoderConfigurationRecord::encode() const {
+    std::vector<uint8_t> ret;
+
+    ret.emplace_back(configurationVersion);
+    ret.emplace_back(avcProfileIndication);
+    ret.emplace_back(profileCompatibility);
+    ret.emplace_back(avcLevelIndication);
+    ret.emplace_back(0xfc | lengthSizeMinusOne);
+    ret.emplace_back(0xe0 | sequenceParameterSets.size());
+
+    for (auto& sps : sequenceParameterSets) {
+        ret.emplace_back(sps.size() >> 8);
+        ret.emplace_back(sps.size() & 0xff);
+        ret.insert(ret.end(), sps.begin(), sps.end());
+    }
+
+    ret.emplace_back(pictureParameterSets.size());
+
+    for (auto& pps : sequenceParameterSets) {
+        ret.emplace_back(pps.size() >> 8);
+        ret.emplace_back(pps.size() & 0xff);
+        ret.insert(ret.end(), pps.begin(), pps.end());
+    }
+
+    return ret;
+}

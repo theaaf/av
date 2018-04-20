@@ -2,6 +2,8 @@
 
 #include "h264.hpp"
 
+#include <vector>
+
 TEST(ue, decode) {
     h264::ue n;
 
@@ -78,4 +80,23 @@ TEST(se, decode) {
         EXPECT_FALSE(n.decode(&bs));
         EXPECT_EQ(-2, n);
     }
+}
+
+TEST(IterateAnnexB, IterateAnnexB) {
+    const unsigned char data[] = {0x00, 0x00, 0x00, 0x01, 0x01, 0x02, 0x03, 0x00, 0x00, 0x00, 0x01, 0x04};
+
+    size_t counter = 0;
+    std::vector<std::vector<uint8_t>> expected = {
+        std::vector<uint8_t>({0x01, 0x02, 0x03}),
+        std::vector<uint8_t>({0x04}),
+    };
+
+    EXPECT_TRUE(h264::IterateAnnexB(data, sizeof(data), [&](const void* data, size_t len) {
+        ASSERT_LT(counter, expected.size());
+        ASSERT_EQ(expected[counter].size(), len);
+        ASSERT_EQ(0, memcmp(&expected[counter][0], data, len));
+        ++counter;
+    }));
+
+    EXPECT_EQ(expected.size(), counter);
 }

@@ -67,7 +67,7 @@ struct MPEG4AudioSpecificConfig {
 };
 
 struct AVCDecoderConfigurationRecord {
-    unsigned int configurationVersion;
+    unsigned int configurationVersion = 1;
     unsigned int avcProfileIndication;
     unsigned int profileCompatibility;
     unsigned int avcLevelIndication;
@@ -78,4 +78,6 @@ struct AVCDecoderConfigurationRecord {
     bool operator==(const AVCDecoderConfigurationRecord& other) const;
 
     bool decode(const void* data, size_t len);
+
+    std::vector<uint8_t> encode() const;
 };

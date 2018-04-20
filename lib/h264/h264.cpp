@@ -4,6 +4,38 @@
 
 namespace h264 {
 
+bool IterateAnnexB(const void* data, size_t len, const std::function<void(const void* data, size_t len)>& f) {
+    auto ptr = reinterpret_cast<const uint8_t*>(data);
+
+    while (true) {
+        while (true) {
+            if (!len) {
+                return true;
+            } else if (ptr[0] != 0) {
+                return false;
+            } else if (len >= 3 && ptr[0] == 0 && ptr[1] == 0 && ptr[2] == 1) {
+                break;
+            }
+            ++ptr;
+            --len;
+        }
+
+        ptr += 3;
+        len -= 3;
+
+        auto nalu = ptr;
+
+        while (true) {
+            if (!len || (len >= 3 && ptr[0] == 0 && ptr[1] == 0 && ptr[2] <= 1)) {
+                f(nalu, ptr - nalu);
+                break;
+            }
+            ++ptr;
+            --len;
+        }
+    }
+}
+
 bool IterateAVCC(const void* data, size_t len, size_t naluSizeLength, const std::function<void(const void* data, size_t len)>& f) {
     if (naluSizeLength > 8) {
         return false;
@@ -37,6 +69,18 @@ bool AVCCToAnnexB(std::vector<uint8_t>* dest, const void* data, size_t len, size
         *(ptr++) = 0;
         *(ptr++) = 0;
         *(ptr++) = 1;
+        std::memcpy(ptr, data, len);
+    });
+}
+
+bool AnnexBToAVCC(std::vector<uint8_t>* dest, const void* data, size_t len) {
+    return IterateAnnexB(data, len, [&](const void* data, size_t len) {
+        dest->resize(dest->size() + 4 + len);
+        auto ptr = &(*dest)[dest->size() - 4 - len];
+        *(ptr++) = len >> 24;
+        *(ptr++) = len >> 16;
+        *(ptr++) = len >> 8;
+        *(ptr++) = len;
         std::memcpy(ptr, data, len);
     });
 }

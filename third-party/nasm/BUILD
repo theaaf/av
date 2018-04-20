@@ -1,16 +1,16 @@
 genrule(
-    name = "yasm-build",
+    name = "nasm-build",
     srcs = glob(["**/*"], exclude=["bazel-*"]),
-    outs = ["yasm"],
+    outs = ["nasm"],
     executable = True,
     output_to_bindir = True,
     cmd = """
-        YASM_ROOT=$$(dirname $(location configure))
-        pushd $$YASM_ROOT 
+        NASM_ROOT=$$(dirname $(location configure))
+        pushd $$NASM_ROOT 
             ./configure
             make -j8
         popd
-        cp $$YASM_ROOT/yasm $(location yasm)
+        cp $$NASM_ROOT/nasm $(location nasm)
     """,
     visibility = ["//visibility:public"],
 )

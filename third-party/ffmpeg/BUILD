@@ -5,7 +5,7 @@ config_setting(
 
 cc_library(
     name = "avcodec",
-    deps = [":avutil"],
+    deps = [":avutil", "@x264//:x264"],
     hdrs = glob(["libavcodec/*.h"]) + ["config.h"],
     srcs = ["libavcodec.a"],
     linkopts = select({
@@ -40,7 +40,7 @@ cc_library(
 
 genrule(
     name = "ffmpeg-build",
-    srcs = glob(["**/*"], exclude=["bazel-*"]) + ["@yasm//:yasm"],
+    srcs = glob(["**/*"], exclude=["bazel-*"]) + ["@nasm//:nasm", "@x264//:headers", "@x264//:libx264.a"],
     outs = [
         "config.h",
         "libavcodec.a",
@@ -50,18 +50,26 @@ genrule(
     ],
     cmd = """
         FFMPEG_ROOT=$$(dirname $(location configure))
-        YASM=$$(pwd)/$(location @yasm//:yasm)
+        mkdir $$FFMPEG_ROOT/additional_includes
+        cp $(locations @x264//:headers) $$FFMPEG_ROOT/additional_includes
+        mkdir $$FFMPEG_ROOT/additional_libs
+        cp $(location @x264//:libx264.a) $$FFMPEG_ROOT/additional_libs
+        ASM=$$(pwd)/$(location @nasm//:nasm)
         pushd $$FFMPEG_ROOT 
             ./configure \
-                --x86asmexe=$$YASM \
+                --x86asmexe=$$ASM \
                 --disable-everything \
                 --disable-programs \
                 --disable-doc \
-                --disable-swscale \
                 --disable-swresample \
                 --enable-muxer=mpegts \
                 --enable-decoder=h264 \
                 --enable-encoder=aac \
+                --enable-encoder=libx264 \
+                --enable-gpl \
+                --enable-libx264 \
+                --extra-cflags=-I./additional_includes \
+                --extra-ldflags=-L./additional_libs \
             && make
         popd
         cp $$FFMPEG_ROOT/config.h $(location config.h)

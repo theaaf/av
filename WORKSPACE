@@ -130,9 +130,17 @@ new_http_archive(
 )
 
 new_http_archive(
-    name = "yasm",
-    url = "http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz",
-    sha256 = "3dce6601b495f5b3d45b59f7d2492a340ee7e84b5beca17e48f862502bd5603f",
-    strip_prefix = "yasm-1.3.0",
-    build_file = "third-party/yasm/BUILD",
+    name = "nasm",
+    url = "https://www.nasm.us/pub/nasm/releasebuilds/2.13.03/nasm-2.13.03.tar.gz",
+    sha256 = "23e1b679d64024863e2991e5c166e19309f0fe58a9765622b35bd31be5b2cc99",
+    strip_prefix = "nasm-2.13.03",
+    build_file = "third-party/nasm/BUILD",
+)
+
+new_http_archive(
+    name = "x264",
+    url = "https://s3.amazonaws.com/aaf-av-public-mirrors/x264-snapshot-20180418-2245-stable.tar.bz2",
+    sha256 = "a492452bb35a3cb8eb27b53ef41ac32e3876366625d6399922970932333df372",
+    strip_prefix = "x264-snapshot-20180418-2245-stable",
+    build_file = "third-party/x264/BUILD",
 )
