@@ -112,11 +112,13 @@ void VideoDecoder::_beginDecoding() {
         _logger.error("unable to allocate codec context");
         return;
     }
+    RegisterFFmpegLogContext(_context, _logger);
 
     auto err = avcodec_open2(_context, codec, nullptr);
     if (err < 0) {
         _logger.error("unable to open codec: {}", FFmpegErrorString(err));
         av_free(_context);
+        UnregisterFFmpegLogContext(_context);
         _context = nullptr;
         return;
     }
@@ -136,6 +138,7 @@ void VideoDecoder::_endDecoding() {
 
     avcodec_close(_context);
     av_free(_context);
+    UnregisterFFmpegLogContext(_context);
     _context = nullptr;
 }
 

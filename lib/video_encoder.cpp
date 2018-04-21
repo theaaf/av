@@ -66,12 +66,15 @@ void VideoEncoder::_beginEncoding(int inputWidth, int inputHeight, AVPixelFormat
         _logger.error("unable to allocate codec context");
         return;
     }
+    RegisterFFmpegLogContext(_context, _logger);
 
     _context->bit_rate = _configuration.bitrate;
     _context->width = _configuration.width;
     _context->height = _configuration.height;
     _context->pix_fmt = inputPixelFormat;
     _context->max_b_frames = 1;
+    _context->profile = _configuration.profileIDC;
+    _context->level = _configuration.levelIDC;
 
     // TODO: probably try to get the actual framerate from the original stream's vui parameters. not
     //       specifying the actual framerate will make bitrate calculations inaccurate
@@ -86,6 +89,7 @@ void VideoEncoder::_beginEncoding(int inputWidth, int inputHeight, AVPixelFormat
     if (err < 0) {
         _logger.error("unable to open codec: {}", FFmpegErrorString(err));
         av_free(_context);
+        UnregisterFFmpegLogContext(_context);
         _context = nullptr;
         return;
     }
@@ -127,6 +131,7 @@ void VideoEncoder::_endEncoding() {
 
     avcodec_close(_context);
     av_free(_context);
+    UnregisterFFmpegLogContext(_context);
     _context = nullptr;
 
     if (_scalingContext) {

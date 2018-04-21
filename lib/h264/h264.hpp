@@ -12,6 +12,7 @@ namespace ProfileIDC {
     constexpr unsigned int Baseline = 66;
     constexpr unsigned int Main = 77;
     constexpr unsigned int Extended = 88;
+    constexpr unsigned int High = 100;
 };
 
 namespace NALUnitType {

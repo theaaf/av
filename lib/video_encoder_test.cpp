@@ -41,6 +41,7 @@ TEST(VideoEncoder, encoding) {
         VideoEncoder::Configuration configuration;
         configuration.width = 600;
         configuration.height = 480;
+        configuration.h264Preset = "veryfast";
         VideoEncoder encoder{&logDestination, &after, configuration};
 
         {

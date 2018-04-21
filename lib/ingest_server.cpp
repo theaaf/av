@@ -1,5 +1,7 @@
 #include "ingest_server.hpp"
 
+#include <fmt/format.h>
+
 std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& connectionId) {
     auto logger = _logger.with("connection_id", connectionId);
 
@@ -14,7 +16,10 @@ std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& 
         if (_configuration.platformAPI) {
             PlatformAPI::AVStream stream;
             stream.bitrate = encoding.video.bitrate;
-            stream.codecs = {"mp4a.40.2", "avc1.64001f"}; // TODO: parameterize
+            stream.codecs = {
+                "mp4a.40.2",
+                fmt::format("avc1.{:02x}00{:02x}", encoding.video.profileIDC, encoding.video.levelIDC),
+            };
             stream.maximumSegmentDuration = std::chrono::seconds(30);
             stream.videoHeight = encoding.video.height;
             stream.videoWidth = encoding.video.width;

@@ -30,6 +30,12 @@ struct EncodingParser {
             if (encoding["video"]["h264_preset"].is_string()) {
                 destination.video.h264Preset = encoding["video"]["h264_preset"].get<std::string>();
             }
+            if (encoding["video"]["profile"].is_number()) {
+                destination.video.profileIDC = encoding["video"]["profile"].get<int>();
+            }
+            if (encoding["video"]["level"].is_number()) {
+                destination.video.levelIDC = encoding["video"]["level"].get<int>();
+            }
         } catch (...) {
             throw args::ParseError("invalid encoding");
         }
@@ -52,6 +58,8 @@ int main(int argc, const char* argv[]) {
             {"width", 1280},
             {"height", 720},
             {"h264_preset", "medium"},
+            {"profile_idc", 100},
+            {"level_idc", 31},
         }},
     };
     args::ArgumentParser parser(

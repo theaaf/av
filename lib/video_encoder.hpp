@@ -13,6 +13,8 @@ extern "C" {
 #include "encoded_av_handler.hpp"
 #include "logger.hpp"
 
+#include <h264/h264.hpp>
+
 // VideoEncoder takes incoming video and synchronously encodes it.
 class VideoEncoder : public VideoHandler {
 public:
@@ -20,6 +22,8 @@ public:
         int bitrate = 4000000;
         int width = -1;
         int height = -1;
+        int profileIDC = h264::ProfileIDC::High;
+        int levelIDC = 31;
         std::string h264Preset = "fast";
     };
 
