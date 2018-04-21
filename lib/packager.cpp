@@ -21,6 +21,11 @@ Packager::~Packager() {
     av_free(_ioContextBuffer);
 }
 
+void Packager::beginNewSegment() {
+    std::lock_guard<std::mutex> l{_mutex};
+    _shouldBeginNewSegment = true;
+}
+
 void Packager::handleEncodedAudioConfig(const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};
 
@@ -124,7 +129,8 @@ void Packager::handleEncodedVideo(std::chrono::microseconds pts, std::chrono::mi
         return;
     }
 
-    if (isIDR) {
+    if (isIDR && (!_videoStream || _shouldBeginNewSegment)) {
+        _shouldBeginNewSegment = false;
         _beginSegment(pts);
     }
 

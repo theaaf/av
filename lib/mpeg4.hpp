@@ -76,6 +76,7 @@ struct AVCDecoderConfigurationRecord {
     std::vector<std::vector<uint8_t>> pictureParameterSets;
 
     bool operator==(const AVCDecoderConfigurationRecord& other) const;
+    bool operator!=(const AVCDecoderConfigurationRecord& other) const { return !(*this == other); }
 
     bool decode(const void* data, size_t len);
 

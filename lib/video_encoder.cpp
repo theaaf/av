@@ -1,5 +1,9 @@
 #include "lib/video_encoder.hpp"
 
+extern "C" {
+    #include <libavutil/imgutils.h>
+}
+
 #include "ffmpeg.hpp"
 #include "mpeg4.hpp"
 
@@ -11,21 +15,34 @@ VideoEncoder::~VideoEncoder() {
     _endEncoding();
 }
 
+void VideoEncoder::flush() {
+    _endEncoding();
+}
+
 void VideoEncoder::handleVideo(std::chrono::microseconds pts, const AVFrame* frame) {
     if (!_context) {
-        _beginEncoding(static_cast<AVPixelFormat>(frame->format));
+        _beginEncoding(frame->width, frame->height, static_cast<AVPixelFormat>(frame->format));
     }
 
     if (!_context) {
         return;
     }
 
-    auto clone = av_frame_clone(frame);
-    clone->pts = pts.count() / 1000000.0 / av_q2d(_context->time_base);
-    clone->pict_type = AV_PICTURE_TYPE_NONE;
+    AVFrame* frameCopy = nullptr;
+    if (_scalingContext) {
+        sws_scale(_scalingContext, frame->data, frame->linesize, 0, frame->height, _scaledFrame->data, _scaledFrame->linesize);
+        frameCopy = _scaledFrame;
+    } else {
+        frameCopy = av_frame_clone(frame);
+    }
 
-	auto err = avcodec_send_frame(_context, clone);
-    av_frame_free(&clone);
+    frameCopy->pts = pts.count() / 1000000.0 / av_q2d(_context->time_base);
+    frameCopy->pict_type = AV_PICTURE_TYPE_NONE;
+
+	auto err = avcodec_send_frame(_context, frameCopy);
+    if (!_scalingContext) {
+        av_frame_free(&frameCopy);
+    }
 	if (err < 0) {
 		_logger.error("error sending video frame to encoder: {}", FFmpegErrorString(err));
 		return;
@@ -34,7 +51,7 @@ void VideoEncoder::handleVideo(std::chrono::microseconds pts, const AVFrame* fra
     _handleEncodedPackets();
 }
 
-void VideoEncoder::_beginEncoding(AVPixelFormat pixelFormat) {
+void VideoEncoder::_beginEncoding(int inputWidth, int inputHeight, AVPixelFormat inputPixelFormat) {
     _endEncoding();
     InitFFmpeg();
 
@@ -53,10 +70,11 @@ void VideoEncoder::_beginEncoding(AVPixelFormat pixelFormat) {
     _context->bit_rate = _configuration.bitrate;
     _context->width = _configuration.width;
     _context->height = _configuration.height;
-    _context->pix_fmt = pixelFormat;
+    _context->pix_fmt = inputPixelFormat;
     _context->max_b_frames = 1;
 
-    // TODO: probably something different. not specifying the actual framerate will make bitrate calculations inaccurate
+    // TODO: probably try to get the actual framerate from the original stream's vui parameters. not
+    //       specifying the actual framerate will make bitrate calculations inaccurate
     _context->time_base = AVRational{1, 120};
     _context->ticks_per_frame = 2;
 
@@ -70,6 +88,28 @@ void VideoEncoder::_beginEncoding(AVPixelFormat pixelFormat) {
         av_free(_context);
         _context = nullptr;
         return;
+    }
+
+    if (inputWidth != _configuration.width || inputHeight != _configuration.height) {
+        _scaledFrame = av_frame_alloc();
+        _scaledFrame->format = _context->pix_fmt;
+        _scaledFrame->width = _context->width;
+        _scaledFrame->height = _context->height;
+        auto err = av_image_alloc(_scaledFrame->data, _scaledFrame->linesize, _context->width, _context->height, _context->pix_fmt, 32);
+        if (err < 0) {
+            _logger.error("unable to allocate image buffer");
+            return;
+        }
+
+        _scalingContext = sws_getContext(
+            inputWidth, inputHeight, inputPixelFormat,
+            _context->width, _context->height, _context->pix_fmt,
+            SWS_BILINEAR, nullptr, nullptr, nullptr
+        );
+        if (!_scalingContext) {
+            _logger.error("unable to create scaling context");
+            return;
+        }
     }
 }
 
@@ -88,6 +128,17 @@ void VideoEncoder::_endEncoding() {
     avcodec_close(_context);
     av_free(_context);
     _context = nullptr;
+
+    if (_scalingContext) {
+        sws_freeContext(_scalingContext);
+        _scalingContext = nullptr;
+    }
+
+    if (_scaledFrame) {
+        av_freep(&_scaledFrame->data[0]);
+        av_frame_free(&_scaledFrame);
+        _scaledFrame = nullptr;
+    }
 }
 
 void VideoEncoder::_handleEncodedPackets() {
@@ -142,7 +193,7 @@ void VideoEncoder::_handleEncodedPackets() {
                     _logger.error("expected both sequence and picture parameter sets with frame");
                 } else {
                     auto encodedConfig = config->encode();
-                    _configuration.handler->handleEncodedVideoConfig(encodedConfig.data(), encodedConfig.size());
+                    _handler->handleEncodedVideoConfig(encodedConfig.data(), encodedConfig.size());
                 }
             }
 
@@ -153,7 +204,7 @@ void VideoEncoder::_handleEncodedPackets() {
             if (!h264::AnnexBToAVCC(&_outputBuffer, packet.data, packet.size)) {
                 _logger.error("unable to convert annex-b encoder output to avcc");
             } else {
-                _configuration.handler->handleEncodedVideo(pts, dts, _outputBuffer.data(), _outputBuffer.size());
+                _handler->handleEncodedVideo(pts, dts, _outputBuffer.data(), _outputBuffer.size());
             }
         }
 

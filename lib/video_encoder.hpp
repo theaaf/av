@@ -6,6 +6,7 @@
 
 extern "C" {
     #include <libavcodec/avcodec.h>
+    #include <libswscale/swscale.h>
 }
 
 #include "av_handler.hpp"
@@ -19,26 +20,31 @@ public:
         int bitrate = 4000000;
         int width = -1;
         int height = -1;
-        std::string h264Preset = "medium";
-        EncodedVideoHandler* handler = nullptr;
+        std::string h264Preset = "fast";
     };
 
-    VideoEncoder(Logger logger, Configuration configuration)
-        : _logger{std::move(logger)}, _configuration{std::move(configuration)} {}
+    VideoEncoder(Logger logger, EncodedVideoHandler* handler, Configuration configuration)
+        : _logger{std::move(logger)}, _handler{handler}, _configuration{std::move(configuration)} {}
 
     virtual ~VideoEncoder();
+
+    // flush outputs encoded video for the frames received so far.
+    void flush();
 
     virtual void handleVideo(std::chrono::microseconds pts, const AVFrame* frame) override;
 
 private:
     const Logger _logger;
+    EncodedVideoHandler* const _handler;
     const Configuration _configuration;
 
     std::vector<uint8_t> _outputBuffer;
 
     AVCodecContext* _context = nullptr;
+    SwsContext* _scalingContext = nullptr;
+    AVFrame* _scaledFrame = nullptr;
 
-    void _beginEncoding(AVPixelFormat pixelFormat);
+    void _beginEncoding(int inputWidth, int inputHeight, AVPixelFormat inputPixelFormat);
     void _endEncoding();
     void _handleEncodedPackets();
 };

@@ -3,41 +3,45 @@
 std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& connectionId) {
     auto logger = _logger.with("connection_id", connectionId);
 
-    if (!_configuration.platformAPI) {
-        return std::make_shared<Stream>(logger, _configuration, connectionId);
-    }
-
     // TODO: actual authentication
 
-    std::string streamId;
+    auto stream = std::make_shared<Stream>(logger, _configuration, connectionId);
 
-    {
-        // TODO: these hard-coded things will be parameterized as transcoding configuration
-        PlatformAPI::AVStream stream;
-        stream.bitrate = 4000000;
-        stream.codecs = {"mp4a.40.2", "avc1.64001f"};
-        stream.maximumSegmentDuration = std::chrono::seconds(30);
-        stream.videoHeight = 1120;
-        stream.videoWidth = 700;
+    for (size_t i = 0; i < _configuration.encodings.size(); ++i) {
+        auto& encoding = _configuration.encodings[i];
+        std::string streamId;
 
-        auto result = _configuration.platformAPI->createAVStream(stream);
-        if (!result.requestError.empty()) {
-            logger.error("createAVStream request error: {}", result.requestError);
-            return nullptr;
-        } else if (!result.errors.empty()) {
-            for (auto& err : result.errors) {
-                logger.error("createAVStream error: {}", err.message);
+        if (_configuration.platformAPI) {
+            PlatformAPI::AVStream stream;
+            stream.bitrate = encoding.video.bitrate;
+            stream.codecs = {"mp4a.40.2", "avc1.64001f"}; // TODO: parameterize
+            stream.maximumSegmentDuration = std::chrono::seconds(30);
+            stream.videoHeight = encoding.video.height;
+            stream.videoWidth = encoding.video.width;
+
+            auto result = _configuration.platformAPI->createAVStream(stream);
+            if (!result.requestError.empty()) {
+                logger.error("createAVStream request error: {}", result.requestError);
+                return nullptr;
+            } else if (!result.errors.empty()) {
+                for (auto& err : result.errors) {
+                    logger.error("createAVStream error: {}", err.message);
+                }
+                return nullptr;
             }
-            return nullptr;
+            streamId = result.data.id;
+            logger.with("av_stream_id", streamId).info("created platform AVStream");
         }
-        streamId = result.data.id;
-        logger.with("av_stream_id", streamId).info("created platform AVStream");
+
+        stream->addEncoding(i, encoding, streamId);
     }
 
-    return std::make_shared<Stream>(logger, _configuration, connectionId, streamId);
+    return stream;
 }
 
-IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, std::string connectionId, std::string streamId) {
+IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, std::string connectionId)
+    : _logger{logger}, _configuration{configuration}
+{
     if (configuration.archiveFileStorage) {
         _archiver = std::make_unique<Archiver>(
             logger,
@@ -48,14 +52,29 @@ IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, 
     }
 
     if (!configuration.segmentFileStorage.empty()) {
-        SegmentManager::Configuration smConfig;
-        for (auto fs : configuration.segmentFileStorage) {
-            smConfig.storage.emplace_back(fs);
-        }
-        smConfig.platformAPI = configuration.platformAPI;
-        smConfig.streamId = streamId;
-        _segmentManager = std::make_unique<SegmentManager>(logger, smConfig);
-        _packager = std::make_unique<Packager>(logger, _segmentManager.get());
-        addHandler(_packager.get());
+        _videoDecoder = std::make_unique<VideoDecoder>(logger, &_decodedSegmentSplitter);
+        _segmentSplitter.addHandler(_videoDecoder.get());
+        _segmenter = std::make_unique<Segmenter>(logger, &_segmentSplitter, [this]{
+            _videoDecoder->flush();
+            for (auto& encoding : _encodings) {
+                encoding->videoEncoder.flush();
+                encoding->packager.beginNewSegment();
+            }
+        });
+        addHandler(_segmenter.get());
     }
+}
+
+void IngestServer::Stream::addEncoding(size_t index, Configuration::Encoding configuration, std::string streamId) {
+    SegmentManager::Configuration smConfig;
+    for (auto fs : _configuration.segmentFileStorage) {
+        smConfig.storage.emplace_back(fs);
+    }
+    smConfig.platformAPI = _configuration.platformAPI;
+    smConfig.streamId = streamId;
+
+    auto encoding = std::make_unique<Encoding>(_logger.with("encoding", index), smConfig, configuration.video);
+    _segmentSplitter.addHandler(dynamic_cast<EncodedAudioHandler*>(&encoding->packager));
+    _decodedSegmentSplitter.addHandler(&encoding->videoEncoder);
+    _encodings.emplace_back(std::move(encoding));
 }

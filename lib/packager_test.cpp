@@ -6,6 +6,7 @@
 #include "encoded_av_handler_test.hpp"
 #include "logger_test.hpp"
 #include "packager.hpp"
+#include "segmenter.hpp"
 #include "utility.hpp"
 
 struct TestSegmentStorage : SegmentStorage {
@@ -43,7 +44,10 @@ TEST(Packager, packaging) {
 
     {
         Packager packager{&logDestination, &storage};
-        ExerciseEncodedAVHandler(&packager);
+        Segmenter segmenter{&logDestination, &packager, [&]{
+            packager.beginNewSegment();
+        }};
+        ExerciseEncodedAVHandler(&segmenter);
     }
 
     EXPECT_GT(storage.segments.size(), 2);
@@ -51,7 +55,7 @@ TEST(Packager, packaging) {
     for (size_t i = 0; i < storage.segments.size(); ++i) {
         EXPECT_EQ("ts", storage.segments[i]->extension) << "segment " << i << " has unexpected extension";
         EXPECT_GT(storage.segments[i]->duration, std::chrono::milliseconds(500)) << "segment " << i << " has short duration";
-        EXPECT_LT(storage.segments[i]->duration, std::chrono::seconds(10)) << "segment " << i << " has long duration";
+        EXPECT_LT(storage.segments[i]->duration, std::chrono::seconds(30)) << "segment " << i << " has long duration";
         EXPECT_TRUE(storage.segments[i]->closed) << "segment " << i << " wasn't closed (" << storage.segments.size() << " segments were opened)";
     }
 

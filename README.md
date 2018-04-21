@@ -19,7 +19,7 @@ At the moment, the only application here is the ingest server. After building it
 This will start up an ingest server that accepts RTMP connections and does nothing with the streams. For something more interesting, you can pass some flags:
 
 ```
-./bazel-bin/ingest-server/ingest-server --archive-storage file:archive --segment-storage file:segments
+./bazel-bin/ingest-server/ingest-server --archive-storage file:archive --segment-storage file:segments --encoding '{"video":{"bitrate":4000000,"height":720,"width":1280}}'
 ```
 
 Now, archive files will be written to the ./archive directory, and segments will be written to ./segments.

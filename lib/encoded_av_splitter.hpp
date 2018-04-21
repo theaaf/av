@@ -2,16 +2,8 @@
 
 #include <vector>
 
+#include "av_splitter.hpp"
 #include "encoded_av_handler.hpp"
-
-template <typename Vector>
-void _avSplitterAppend(Vector& v) {}
-
-template <typename Vector, typename Next, typename... Rem>
-void _avSplitterAppend(Vector& v, Next&& next, Rem&&... rem) {
-    v.emplace_back(std::forward<Next>(next));
-    return _avSplitterAppend(v, std::forward<Rem>(rem)...);
-}
 
 class EncodedAudioSplitter : public EncodedAudioHandler {
 public:

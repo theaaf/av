@@ -4,10 +4,7 @@
 
 #include "encoded_av_handler_test.hpp"
 #include "encoded_av_splitter.hpp"
-#include "file_storage.hpp"
 #include "logger_test.hpp"
-#include "packager.hpp"
-#include "segment_storage.hpp"
 #include "video_decoder.hpp"
 #include "video_encoder.hpp"
 
@@ -44,8 +41,7 @@ TEST(VideoEncoder, encoding) {
         VideoEncoder::Configuration configuration;
         configuration.width = 600;
         configuration.height = 480;
-        configuration.handler = &after;
-        VideoEncoder encoder{&logDestination, configuration};
+        VideoEncoder encoder{&logDestination, &after, configuration};
 
         {
             VideoDecoder decoder{&logDestination, &encoder};
@@ -59,59 +55,4 @@ TEST(VideoEncoder, encoding) {
     }
 
     EXPECT_EQ(before.frameCount, after.frameCount);
-}
-
-// Want to write a quick before and after to disk to test encodings?
-//
-// bazel build lib:test && ./bazel-bin/lib/test --gtest_also_run_disabled_tests --gtest_filter='VideoEncoder.*beforeAndAfter'
-TEST(VideoEncoder, DISABLED_beforeAndAfter) {
-    struct LocalSegmentStorage : SegmentStorage {
-        explicit LocalSegmentStorage(std::string directory) : storage{Logger{}, std::move(directory)} {}
-
-        struct Segment : SegmentStorage::Segment {
-            explicit Segment(std::shared_ptr<FileStorage::File> f) : f{f} {}
-
-            virtual bool write(const void* data, size_t len) override {
-                return f->write(data, len);
-            }
-
-            virtual bool close(std::chrono::microseconds duration) override {
-                return f->close();
-            }
-
-            std::shared_ptr<FileStorage::File> f;
-        };
-
-        virtual std::shared_ptr<SegmentStorage::Segment> createSegment(const std::string& extension) override {
-            return std::make_shared<Segment>(storage.createFile("segment-" + std::to_string(counter++) + "." + extension));
-        }
-
-        int counter = 0;
-        LocalFileStorage storage;
-    };
-
-    {
-        LocalSegmentStorage storage{"test-output/VideoEncoder-before"};
-        Packager packager{Logger{}, &storage};
-        ExerciseEncodedAVHandler(&packager);
-    }
-
-    {
-        LocalSegmentStorage storage{"test-output/VideoEncoder-after"};
-        Packager packager{Logger{}, &storage};
-
-        VideoEncoder::Configuration configuration;
-        configuration.width = 600;
-        configuration.height = 480;
-        configuration.handler = &packager;
-        VideoEncoder encoder{Logger{}, configuration};
-
-        VideoDecoder decoder{Logger{}, &encoder};
-
-        EncodedAVSplitter avHandler;
-        avHandler.addHandler(dynamic_cast<EncodedAudioHandler*>(&packager));
-        avHandler.addHandler(&decoder);
-
-        ExerciseEncodedAVHandler(&avHandler);
-    }
 }

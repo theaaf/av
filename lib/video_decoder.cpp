@@ -8,6 +8,10 @@ VideoDecoder::~VideoDecoder() {
     _endDecoding();
 }
 
+void VideoDecoder::flush() {
+    _endDecoding();
+}
+
 void VideoDecoder::handleEncodedVideoConfig(const void* data, size_t len) {
     auto config = std::make_unique<AVCDecoderConfigurationRecord>();
     if (!config->decode(data, len)) {

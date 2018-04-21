@@ -38,6 +38,15 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "swscale",
+    deps = [":avutil"],
+    hdrs = glob(["libswscale/*.h"]) + ["config.h"],
+    srcs = ["libswscale.a"],
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
+
 genrule(
     name = "ffmpeg-build",
     srcs = glob(["**/*"], exclude=["bazel-*"]) + ["@nasm//:nasm", "@x264//:headers", "@x264//:libx264.a"],
@@ -47,6 +56,7 @@ genrule(
         "libavformat.a",
         "libavutil.a",
         "libavutil/avconfig.h",
+        "libswscale.a",
     ],
     cmd = """
         FFMPEG_ROOT=$$(dirname $(location configure))
@@ -77,5 +87,6 @@ genrule(
         cp $$FFMPEG_ROOT/libavformat/libavformat.a $(location libavformat.a)
         cp $$FFMPEG_ROOT/libavutil/libavutil.a $(location libavutil.a)
         cp $$FFMPEG_ROOT/libavutil/avconfig.h $(location libavutil/avconfig.h)
+        cp $$FFMPEG_ROOT/libswscale/libswscale.a $(location libswscale.a)
     """,
 )

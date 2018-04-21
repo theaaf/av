@@ -3,6 +3,7 @@ cc_library(
     deps = [
         "@asio//:asio",
         "@ffmpeg//:avformat",
+        "@ffmpeg//:swscale",
         "@fmt//:fmt",
         "@rtmpdump//:librtmp",
         "@aws//:aws",

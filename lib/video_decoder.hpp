@@ -17,6 +17,10 @@ public:
     VideoDecoder(Logger logger, VideoHandler* handler) : _logger{std::move(logger)}, _handler{handler} {}
     virtual ~VideoDecoder();
 
+    // flush outputs decoded video for the frames received so far. Note that if the next frame
+    // received after this call is not an IDR, frames will be skipped.
+    void flush();
+
     virtual void handleEncodedVideoConfig(const void* data, size_t len) override;
     virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
 

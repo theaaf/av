@@ -21,6 +21,9 @@ public:
     Packager(Logger logger, SegmentStorage* storage);
     virtual ~Packager();
 
+    // beginNewSegment instructs the packager to begin a new segment at the next IDR.
+    void beginNewSegment();
+
     virtual void handleEncodedAudioConfig(const void* data, size_t len) override;
     virtual void handleEncodedAudio(std::chrono::microseconds pts, const void* data, size_t len) override;
     virtual void handleEncodedVideoConfig(const void* data, size_t len) override;
@@ -31,6 +34,8 @@ private:
     SegmentStorage* const _storage;
 
     std::mutex _mutex;
+
+    bool _shouldBeginNewSegment = false;
 
     std::vector<uint8_t> _inputBuffer;
 
