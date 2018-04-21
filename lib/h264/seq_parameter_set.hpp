@@ -6,6 +6,59 @@
 
 namespace h264 {
 
+namespace AspectRatioIDC {
+    constexpr unsigned int Extended_SAR = 255;
+}
+
+struct vui_parameters {
+    u<1> aspect_ratio_info_present_flag;
+
+    // if (aspect_ratio_info_present_flag) {
+        u<8> aspect_ratio_idc;
+        // if (aspect_ratio_idc == Extended_SAR) {
+            u<16> sar_width;
+            u<16> sar_height;
+        // }
+    // }
+
+    u<1> overscan_info_present_flag;
+
+    // if (overscan_info_present_flag) {
+        u<1> overscan_appropriate_flag;
+    // }
+
+    u<1> video_signal_type_present_flag;
+
+    // if (video_signal_type_present_flag) {
+        u<3> video_format;
+        u<1> video_full_range_flag;
+        u<1> colour_description_present_flag;
+
+        // if (colour_description_present_flag) {
+            u<8> colour_primaries;
+            u<8> transfer_characteristics;
+            u<8> matrix_coefficients;
+        // }
+    // }
+
+    u<1> chroma_loc_info_present_flag;
+
+    // if (chroma_loc_info_present_flag) {
+        ue chroma_sample_loc_type_top_field;
+        ue chroma_sample_loc_type_bottom_field;
+    // }
+
+    u<1> timing_info_present_flag;
+
+    // if (timing_info_present_flag) {
+        u<32> num_units_in_tick;
+        u<32> time_scale;
+        u<1> fixed_frame_rate_flag;
+    // }
+
+    error decode(bitstream* bs);
+};
+
 // ITU-T H.264, 04/2017, 7.3.2.1.1
 struct seq_parameter_set_data {
     u<8> profile_idc;
@@ -65,6 +118,12 @@ struct seq_parameter_set_data {
         ue frame_crop_right_offset;
         ue frame_crop_top_offset;
         ue frame_crop_bottom_offset;
+    // }
+
+    u<1> vui_parameters_present_flag;
+
+    // if (vui_parameters_present_flag) {
+        vui_parameters vui_parameters;
     // }
 
     uint16_t SubWidthC() const {

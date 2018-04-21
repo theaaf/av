@@ -37,4 +37,11 @@ TEST(seq_parameter_set_data, decode) {
 
     EXPECT_EQ(1280, sps.FrameCroppingRectangleWidth());
     EXPECT_EQ(720, sps.FrameCroppingRectangleHeight());
+
+    EXPECT_EQ(1, sps.vui_parameters_present_flag);
+
+    EXPECT_EQ(1, sps.vui_parameters.timing_info_present_flag);
+    EXPECT_EQ(1, sps.vui_parameters.num_units_in_tick);
+    EXPECT_EQ(6000, sps.vui_parameters.time_scale);
+    EXPECT_EQ(0, sps.vui_parameters.fixed_frame_rate_flag);
 }

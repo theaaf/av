@@ -2,6 +2,102 @@
 
 namespace h264 {
 
+error vui_parameters::decode(bitstream* bs) {
+    auto err = bs->decode(&aspect_ratio_info_present_flag);
+    if (err) {
+        return err;
+    }
+
+    if (aspect_ratio_info_present_flag) {
+        err = bs->decode(&aspect_ratio_idc);
+        if (err) {
+            return err;
+        }
+
+        if (aspect_ratio_idc == AspectRatioIDC::Extended_SAR) {
+            err = bs->decode(
+                &sar_width,
+                &sar_height
+            );
+            if (err) {
+                return err;
+            }
+        }
+    }
+
+    err = bs->decode(&overscan_info_present_flag);
+    if (err) {
+        return err;
+    }
+
+    if (overscan_info_present_flag) {
+        err = bs->decode(&overscan_appropriate_flag);
+        if (err) {
+            return err;
+        }
+    }
+
+    err = bs->decode(&video_signal_type_present_flag);
+    if (err) {
+        return err;
+    }
+
+    if (video_signal_type_present_flag) {
+        err = bs->decode(
+            &video_format,
+            &video_full_range_flag,
+            &colour_description_present_flag
+        );
+        if (err) {
+            return err;
+        }
+
+        if (colour_description_present_flag) {
+            err = bs->decode(
+                &colour_primaries,
+                &transfer_characteristics,
+                &matrix_coefficients
+            );
+            if (err) {
+                return err;
+            }
+        }
+    }
+
+    err = bs->decode(&chroma_loc_info_present_flag);
+    if (err) {
+        return err;
+    }
+
+    if (chroma_loc_info_present_flag) {
+        err = bs->decode(
+            &chroma_sample_loc_type_top_field,
+            &chroma_sample_loc_type_bottom_field
+        );
+        if (err) {
+            return err;
+        }
+    }
+
+    err = bs->decode(&timing_info_present_flag);
+    if (err) {
+        return err;
+    }
+
+    if (timing_info_present_flag) {
+        err = bs->decode(
+            &num_units_in_tick,
+            &time_scale,
+            &fixed_frame_rate_flag
+        );
+        if (err) {
+            return err;
+        }
+    }
+
+    return {};
+}
+
 error seq_parameter_set_data::decode(bitstream* bs) {
     auto err = bs->decode(
         &profile_idc,
@@ -120,6 +216,18 @@ error seq_parameter_set_data::decode(bitstream* bs) {
             &frame_crop_top_offset,
             &frame_crop_bottom_offset
         );
+        if (err) {
+            return err;
+        }
+    }
+
+    err = bs->decode(&vui_parameters_present_flag);
+    if (err) {
+        return err;
+    }
+
+    if (vui_parameters_present_flag) {
+        err = bs->decode(&vui_parameters);
         if (err) {
             return err;
         }

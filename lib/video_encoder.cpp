@@ -76,8 +76,10 @@ void VideoEncoder::_beginEncoding(int inputWidth, int inputHeight, AVPixelFormat
     _context->profile = _configuration.profileIDC;
     _context->level = _configuration.levelIDC;
 
-    // TODO: probably try to get the actual framerate from the original stream's vui parameters. not
-    //       specifying the actual framerate will make bitrate calculations inaccurate
+    // XXX: guessing at the framerate will make bitrate calculations inaccurate. if the original
+    // stream had a fixed framerate and vui parameters, we may be able to get the framerate from the
+    // sps. unfortunately, we can't really rely on or expect that.
+    // TODO: ??? parameterize the time base maybe?
     _context->time_base = AVRational{1, 120};
     _context->ticks_per_frame = 2;
 
