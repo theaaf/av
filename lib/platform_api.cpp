@@ -5,7 +5,7 @@ using json = nlohmann::json;
 template <typename T>
 PlatformAPI::Result<T> PlatformAPI::_doGraphQL(const json& body, std::function<void(json&, T*)> f) {
     HTTPRequest httpRequest;
-    httpRequest.url = _url + "/graphql";
+    httpRequest.url = _url + "/v1/graphql";
     httpRequest.body = body.dump();
     httpRequest.headers["Authorization"] = "token " + _accessToken;
     httpRequest.headers["Content-Type"] = "application/json";

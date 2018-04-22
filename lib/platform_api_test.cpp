@@ -5,7 +5,7 @@
 TEST(PlatformAPI, createAVStream) {
     struct TestHTTPClient : HTTPClient {
         virtual HTTPResult request(const HTTPRequest& request) override {
-            EXPECT_EQ("https://example.com/api/graphql", request.url);
+            EXPECT_EQ("https://example.com/v1/graphql", request.url);
             EXPECT_EQ("token access-token", request.headers.at("Authorization"));
             HTTPResult result;
             result.statusCode = 200;
@@ -22,7 +22,7 @@ TEST(PlatformAPI, createAVStream) {
         }
     } httpClient;
 
-    PlatformAPI api{"https://example.com/api/", "access-token", &httpClient};
+    PlatformAPI api{"https://example.com", "access-token", &httpClient};
 
     PlatformAPI::AVStream stream;
     stream.bitrate = 6000000;
@@ -35,7 +35,7 @@ TEST(PlatformAPI, createAVStream) {
 TEST(PlatformAPI, createAVStreamSegmentReplica) {
     struct TestHTTPClient : HTTPClient {
         virtual HTTPResult request(const HTTPRequest& request) override {
-            EXPECT_EQ("https://example.com/api/graphql", request.url);
+            EXPECT_EQ("https://example.com/v1/graphql", request.url);
             EXPECT_EQ("token access-token", request.headers.at("Authorization"));
             HTTPResult result;
             result.statusCode = 200;
@@ -52,7 +52,7 @@ TEST(PlatformAPI, createAVStreamSegmentReplica) {
         }
     } httpClient;
 
-    PlatformAPI api{"https://example.com/api/", "access-token", &httpClient};
+    PlatformAPI api{"https://example.com", "access-token", &httpClient};
 
     PlatformAPI::AVStreamSegmentReplica replica;
     replica.streamId = "stream-id";

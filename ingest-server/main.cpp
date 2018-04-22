@@ -101,7 +101,7 @@ int main(int argc, const char* argv[]) {
 
     std::unique_ptr<PlatformAPI> platformAPI;
     if (platformURL) {
-        platformAPI = std::make_unique<PlatformAPI>(args::get(platformURL)+"/api", args::get(platformAccessToken));
+        platformAPI = std::make_unique<PlatformAPI>(args::get(platformURL), args::get(platformAccessToken));
         configuration.platformAPI = platformAPI.get();
     }
 

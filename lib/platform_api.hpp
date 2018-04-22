@@ -12,7 +12,7 @@
 
 class PlatformAPI {
 public:
-    // url should be the full path to the API, such as http://127.0.0.1:8080/api
+    // url should be the platform scheme and address, such as http://127.0.0.1:8080
     PlatformAPI(std::string url, std::string accessToken, HTTPClient* clientOverride = nullptr)
         : _url{url.back() == '/' ? url.substr(0, url.size()-1) : std::move(url)}, _accessToken{std::move(accessToken)}, _httpClient{clientOverride ? clientOverride : DefaultHTTPClient} {}
 
