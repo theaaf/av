@@ -123,7 +123,7 @@ struct seq_parameter_set_data {
     u<1> vui_parameters_present_flag;
 
     // if (vui_parameters_present_flag) {
-        vui_parameters vui_parameters;
+        h264::vui_parameters vui_parameters;
     // }
 
     uint16_t SubWidthC() const {
