@@ -44,11 +44,13 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
     auto query = R"query(
       mutation CreateAVStream($codecs: [String]!, $bitrate: Int!, $videoWidth: Int!, $videoHeight: Int!, $maximumSegmentDurationMilliseconds: Int!) {
         createAVStream(
-          codecs: $codecs,
-          bitrate: $bitrate,
-          videoWidth: $videoWidth,
-          videoHeight: $videoHeight,
-          maximumSegmentDurationMilliseconds: $maximumSegmentDurationMilliseconds,
+          stream: {
+            codecs: $codecs,
+            bitrate: $bitrate,
+            videoWidth: $videoWidth,
+            videoHeight: $videoHeight,
+            maximumSegmentDurationMilliseconds: $maximumSegmentDurationMilliseconds,
+          },
         ) {
           id
         }
@@ -76,10 +78,12 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::
     auto query = R"query(
       mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $url: String!, $durationMilliseconds: Int!) {
         createAVStreamSegmentReplica(
-          streamId: $streamId,
-          segmentNumber: $segmentNumber,
-          url: $url,
-          durationMilliseconds: $durationMilliseconds,
+          replica: {
+            streamId: $streamId,
+            segmentNumber: $segmentNumber,
+            url: $url,
+            durationMilliseconds: $durationMilliseconds,
+          },
         ) {
           id
         }
