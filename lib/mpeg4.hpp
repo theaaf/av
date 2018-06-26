@@ -64,6 +64,8 @@ struct MPEG4AudioSpecificConfig {
     std::vector<uint8_t> adtsHeader(size_t aacLength) const;
 
     bool decode(const void* data, size_t len);
+
+    std::vector<uint8_t> encode() const;
 };
 
 struct AVCDecoderConfigurationRecord {

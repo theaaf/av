@@ -19,6 +19,8 @@ namespace NALUnitType {
     constexpr unsigned int IDRSlice = 5;
     constexpr unsigned int SequenceParameterSet = 7;
     constexpr unsigned int PictureParameterSet = 8;
+    constexpr unsigned int AccessUnitDelimiter = 9;
+    constexpr unsigned int PrefixNALUnit = 14;
 }
 
 // ITU-T H.264, 04/2017, 7.2
@@ -90,9 +92,11 @@ struct se {
 bool IterateAVCC(const void* data, size_t len, size_t naluSizeLength, const std::function<void(const void* data, size_t len)>& f);
 bool IterateAnnexB(const void* data, size_t len, const std::function<void(const void* data, size_t len)>& f);
 
+bool FilterAVCC(std::vector<uint8_t>* dest, const void* data, size_t len, size_t naluSizeLength, std::function<bool(unsigned int)> filter = {});
+
 bool AVCCToAnnexB(std::vector<uint8_t>* dest, const void* data, size_t len, size_t naluSizeLength);
 
 // AnnexBToAVCC converts AnnexB to AVCC with a NALU size length of 4.
-bool AnnexBToAVCC(std::vector<uint8_t>* dest, const void* data, size_t len);
+bool AnnexBToAVCC(std::vector<uint8_t>* dest, const void* data, size_t len, std::function<bool(unsigned int)> filter = {});
 
 } // namespace h264

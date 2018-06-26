@@ -13,7 +13,7 @@ TEST(DefaultHTTPClient, request) {
 
     auto resp = DefaultHTTPClient->request(req);
     ASSERT_EQ(200, resp.statusCode);
-    EXPECT_NE(std::string::npos, resp.body.find("\"Foo\": \"bar\"")) << resp.body;
+    EXPECT_NE(std::string::npos, resp.body.find("\"Foo\":\"bar\"")) << resp.body;
     EXPECT_NE(std::string::npos, resp.body.find("\"baz\"")) << resp.body;
 }
 

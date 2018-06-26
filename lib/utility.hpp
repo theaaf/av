@@ -2,8 +2,21 @@
 
 #include <stddef.h>
 #include <cstdint>
+#include <functional>
 #include <string>
+#include <utility>
 #include <vector>
+
+#define CLEANUP(f) Cleanup _cleanup ## __LINE__(f)
+
+class Cleanup {
+public:
+    explicit Cleanup(std::function<void()> f) : _f{std::move(f)} {}
+    ~Cleanup() { _f(); }
+
+private:
+    std::function<void()> _f;
+};
 
 template <typename T = uint8_t>
 constexpr T HexToInt(char hex) {

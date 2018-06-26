@@ -115,6 +115,38 @@ bool MPEG4AudioSpecificConfig::decode(const void* data, size_t len) {
     return b.read_bits(&channelConfiguration, 4);
 }
 
+std::vector<uint8_t> MPEG4AudioSpecificConfig::encode() const {
+    std::vector<uint8_t> ret;
+    auto fi = static_cast<unsigned int>(frequencyIndex());
+    auto obj = static_cast<unsigned int>(objectType);
+    auto ch = static_cast<unsigned int>(channelConfiguration);
+    if (objectType > MPEG4AudioObjectType::Escape && frequencyIndex() == MPEG4SamplingFrequency::Explicit) {
+        // 11111OOO OOO1111F FFFFFFFF FFFFFFFF FFFFFFFC CCC00000
+        ret.emplace_back(0xf8 | (obj >> 3));
+        ret.emplace_back((obj << 5) | 0x1e | (frequency >> 23));
+        ret.emplace_back(frequency >> 15);
+        ret.emplace_back(frequency >> 7 | (ch >> 3));
+        ret.emplace_back(ch << 5);
+    } else if (objectType > MPEG4AudioObjectType::Escape) {
+        // 11111OOO OOOFFFFC CCC00000
+        ret.emplace_back(0xf8 | (obj >> 3));
+        ret.emplace_back((obj << 5) | (fi << 1) | (ch >> 3));
+        ret.emplace_back(ch << 5);
+    } else if (frequencyIndex() == MPEG4SamplingFrequency::Explicit) {
+        // OOOOO111 1FFFFFFF FFFFFFFF FFFFFFFF FCCCC000
+        ret.emplace_back((obj << 3) | 7);
+        ret.emplace_back(0x80 | (frequency >> 17));
+        ret.emplace_back(frequency >> 9);
+        ret.emplace_back(frequency >> 1);
+        ret.emplace_back((frequency << 7) | (ch << 3));
+    } else {
+        // OOOOOFFF FCCCC000
+        ret.emplace_back((obj << 3) | (fi >> 1));
+        ret.emplace_back((fi << 7) | (ch << 3));
+    }
+    return ret;
+}
+
 bool AVCDecoderConfigurationRecord::operator==(const AVCDecoderConfigurationRecord& other) const {
     return true
         && configurationVersion == other.configurationVersion
@@ -192,7 +224,7 @@ std::vector<uint8_t> AVCDecoderConfigurationRecord::encode() const {
 
     ret.emplace_back(pictureParameterSets.size());
 
-    for (auto& pps : sequenceParameterSets) {
+    for (auto& pps : pictureParameterSets) {
         ret.emplace_back(pps.size() >> 8);
         ret.emplace_back(pps.size() & 0xff);
         ret.insert(ret.end(), pps.begin(), pps.end());

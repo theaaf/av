@@ -72,10 +72,14 @@ genrule(
                 --disable-programs \
                 --disable-doc \
                 --disable-swresample \
+                --enable-demuxer=mov \
+                --enable-demuxer=mpegts \
                 --enable-muxer=mpegts \
+                --enable-decoder=aac \
                 --enable-decoder=h264 \
                 --enable-encoder=aac \
                 --enable-encoder=libx264 \
+                --enable-protocol=file \
                 --enable-gpl \
                 --enable-libx264 \
                 --extra-cflags=-I./additional_includes \

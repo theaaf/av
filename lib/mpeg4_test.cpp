@@ -15,6 +15,21 @@ TEST(MPEG4AudioSpecificConfig, decode) {
     EXPECT_EQ(MPEG4ChannelConfiguration::TwoChannels, config.channelConfiguration);
 }
 
+TEST(MPEG4AudioSpecificConfig, encodeDecode) {
+	MPEG4AudioSpecificConfig before;
+    before.objectType = MPEG4AudioObjectType::AACLC;
+    before.frequency = 48000;
+    before.channelConfiguration = MPEG4ChannelConfiguration::TwoChannels;
+
+    auto encoded = before.encode();
+
+	MPEG4AudioSpecificConfig after;
+    EXPECT_TRUE(after.decode(encoded.data(), encoded.size()));
+    EXPECT_EQ(before.objectType, after.objectType);
+    EXPECT_EQ(before.frequency, after.frequency);
+    EXPECT_EQ(before.channelConfiguration, after.channelConfiguration);
+}
+
 TEST(AVCDecoderConfigurationRecord, decode) {
 	const unsigned char data[] = {
         0x01, 0x4d, 0x40, 0x1f, 0xff, 0xe1, 0x00, 0x1c, 0x67, 0x4d, 0x40, 0x1f, 0xec, 0xa0, 0x28,
