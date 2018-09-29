@@ -33,6 +33,7 @@ public:
         int videoHeight = 0;
         int videoWidth = 0;
         int bitrate = 0;
+        std::string gameId;
     };
 
     struct CreateAVStreamData {
@@ -46,6 +47,8 @@ public:
         int64_t segmentNumber = 0;
         std::string url;
         std::chrono::milliseconds duration;
+        std::string gameId;
+        bool discontinuity = false;
     };
 
     struct CreateAVStreamSegmentReplicaData {

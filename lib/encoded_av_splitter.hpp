@@ -63,6 +63,12 @@ public:
         }
     }
 
+    virtual void handleEncodedVideoDiscontinuity() override {
+        for (auto r : _handlers) {
+            r->handleEncodedVideoDiscontinuity();
+        }
+    }
+
 private:
     std::vector<EncodedVideoHandler*> _handlers;
 };
@@ -86,6 +92,10 @@ struct EncodedAVSplitter : EncodedAudioSplitter, EncodedVideoSplitter, EncodedAV
 
     virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override {
         EncodedVideoSplitter::handleEncodedVideo(pts, dts, data, len);
+    }
+
+    virtual void handleEncodedVideoDiscontinuity() override {
+        EncodedVideoSplitter::handleEncodedVideoDiscontinuity();
     }
 
     using EncodedAudioSplitter::addHandler;

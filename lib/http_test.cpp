@@ -7,13 +7,13 @@ TEST(DefaultHTTPClient, request) {
     req.url = "https://httpbin.org/post";
     req.method = "POST";
     req.headers = {
-        {"Foo", "bar"},
+        {"Foo", "IAmUnlikelyToOccurRandomlyHeader"},
     };
     req.body = "baz";
 
     auto resp = DefaultHTTPClient->request(req);
     ASSERT_EQ(200, resp.statusCode);
-    EXPECT_NE(std::string::npos, resp.body.find("\"Foo\":\"bar\"")) << resp.body;
+    EXPECT_NE(std::string::npos, resp.body.find("IAmUnlikelyToOccurRandomlyHeader")) << resp.body;
     EXPECT_NE(std::string::npos, resp.body.find("\"baz\"")) << resp.body;
 }
 

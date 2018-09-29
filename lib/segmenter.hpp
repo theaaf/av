@@ -24,6 +24,10 @@ public:
     virtual void handleEncodedVideoConfig(const void* data, size_t len) override;
     virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
 
+    virtual void handleEncodedVideoDiscontinuity() override {
+        _handler->handleEncodedVideoDiscontinuity();
+    }
+
 private:
     const Logger _logger;
     EncodedAVHandler* const _handler;

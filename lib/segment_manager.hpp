@@ -16,6 +16,7 @@ public:
         std::vector<FileStorage*> storage;
         PlatformAPI* platformAPI = nullptr;
         std::string streamId;
+        std::string gameId;
     };
 
     explicit SegmentManager(Logger logger, Configuration configuration) : _logger{std::move(logger)}, _configuration{std::move(configuration)} {}

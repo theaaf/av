@@ -48,7 +48,9 @@ SegmentManager::Segment::Segment(Logger logger, const SegmentManager::Configurat
                 replica.streamId = configuration.streamId;
                 replica.segmentNumber = segmentNumber;
                 replica.url = url;
+                replica.gameId = configuration.gameId;
                 replica.duration = std::chrono::duration_cast<decltype(replica.duration)>(_duration);
+                replica.discontinuity = metadata.discontinuity;
 
                 auto result = configuration.platformAPI->createAVStreamSegmentReplica(replica);
                 if (!result.requestError.empty()) {

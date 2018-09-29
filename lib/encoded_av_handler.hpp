@@ -25,6 +25,8 @@ struct EncodedVideoHandler {
 
     // handleEncodedVideo handles raw AVCC NALUs.
     virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {}
+
+    virtual void handleEncodedVideoDiscontinuity() {}
 };
 
 struct EncodedAVHandler : EncodedAudioHandler, EncodedVideoHandler {

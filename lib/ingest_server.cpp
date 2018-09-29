@@ -23,6 +23,7 @@ std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& 
             stream.maximumSegmentDuration = std::chrono::seconds(30);
             stream.videoHeight = encoding.video.height;
             stream.videoWidth = encoding.video.width;
+            stream.gameId = _configuration.gameId;
 
             auto result = _configuration.platformAPI->createAVStream(stream);
             if (!result.requestError.empty()) {

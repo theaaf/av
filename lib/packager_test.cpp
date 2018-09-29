@@ -16,6 +16,8 @@ struct TestSegmentStorage : SegmentStorage {
             return true;
         }
 
+        virtual ~Segment(){}
+
         virtual bool close(std::chrono::microseconds duration) override {
             closed = true;
             this->duration = duration;

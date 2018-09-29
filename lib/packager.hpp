@@ -29,6 +29,8 @@ public:
     virtual void handleEncodedVideoConfig(const void* data, size_t len) override;
     virtual void handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) override;
 
+    virtual void handleEncodedVideoDiscontinuity() override;
+
 private:
     const Logger _logger;
     SegmentStorage* const _storage;
@@ -36,6 +38,7 @@ private:
     std::mutex _mutex;
 
     bool _shouldBeginNewSegment = false;
+    bool _shouldMarkNextSegmentDiscontinuous = true;
 
     std::vector<uint8_t> _inputBuffer;
 

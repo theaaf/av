@@ -69,6 +69,7 @@ int main(int argc, const char* argv[]) {
     ).c_str());
     parser.helpParams.width = 120;
     args::HelpFlag help(parser, "help", "display this help", {'h', "help"});
+    args::ValueFlag<std::string> gameId(parser, "gameId", "id of the game to submit segments for", {"gameId"});
     args::ValueFlag<std::string> platformURL(parser, "url", "platform url", {"platform-url"});
     args::ValueFlag<std::string> platformAccessToken(parser, "token", "platform access token", {"platform-access-token"});
     args::ValueFlag<std::shared_ptr<FileStorage>, FileStorageParser> archiveStorage(parser, "uri", "uri to archive to", {"archive-storage"});
@@ -86,6 +87,10 @@ int main(int argc, const char* argv[]) {
     }
 
     IngestServer::Configuration configuration;
+
+    if (gameId) {
+        configuration.gameId = args::get(gameId);
+    }
 
     if (archiveStorage) {
         configuration.archiveFileStorage = args::get(archiveStorage).get();

@@ -21,6 +21,7 @@ public:
         FileStorage* archiveFileStorage = nullptr;
         std::vector<FileStorage*> segmentFileStorage;
         PlatformAPI* platformAPI = nullptr;
+        std::string gameId;
 
         struct Encoding {
             VideoEncoder::Configuration video;

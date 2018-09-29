@@ -42,9 +42,10 @@ PlatformAPI::Result<T> PlatformAPI::_doGraphQL(const json& body, std::function<v
 
 PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream(const PlatformAPI::AVStream& stream) {
     auto query = R"query(
-      mutation CreateAVStream($codecs: [String]!, $bitrate: Int!, $videoWidth: Int!, $videoHeight: Int!, $maximumSegmentDurationMilliseconds: Int!) {
+      mutation CreateAVStream($gameId: ID!, $codecs: [String]!, $bitrate: Int!, $videoWidth: Int!, $videoHeight: Int!, $maximumSegmentDurationMilliseconds: Int!) {
         createAVStream(
           stream: {
+            gameId: $gameId,
             codecs: $codecs,
             bitrate: $bitrate,
             videoWidth: $videoWidth,
@@ -65,6 +66,7 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
             {"bitrate", stream.bitrate},
             {"videoWidth", stream.videoWidth},
             {"videoHeight", stream.videoHeight},
+            {"gameId", stream.gameId},
             {"maximumSegmentDurationMilliseconds", std::chrono::milliseconds(stream.maximumSegmentDuration).count()},
         }},
     };
@@ -76,13 +78,14 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
 
 PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::createAVStreamSegmentReplica(const PlatformAPI::AVStreamSegmentReplica& replica) {
     auto query = R"query(
-      mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $url: String!, $durationMilliseconds: Int!) {
+      mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $url: String!, $durationMilliseconds: Int!, $discontinuity: Boolean) {
         createAVStreamSegmentReplica(
           replica: {
             streamId: $streamId,
             segmentNumber: $segmentNumber,
             url: $url,
             durationMilliseconds: $durationMilliseconds,
+            discontinuity: $discontinuity,
           },
         ) {
           id
@@ -98,6 +101,7 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::
             {"segmentNumber", replica.segmentNumber},
             {"url", replica.url},
             {"durationMilliseconds", std::chrono::milliseconds(replica.duration).count()},
+            {"discontinuity", replica.discontinuity},
         }},
     };
 

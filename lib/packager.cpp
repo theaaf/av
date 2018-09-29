@@ -26,6 +26,15 @@ void Packager::beginNewSegment() {
     _shouldBeginNewSegment = true;
 }
 
+void Packager::handleEncodedVideoDiscontinuity() {
+    std::lock_guard<std::mutex> l{_mutex};
+    _endSegment();
+    _videoConfig = nullptr;
+    _audioConfig = nullptr;
+    _shouldMarkNextSegmentDiscontinuous = true;
+    _shouldBeginNewSegment = true;
+}
+
 void Packager::handleEncodedAudioConfig(const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};
 
@@ -178,7 +187,14 @@ void Packager::_beginSegment(std::chrono::microseconds pts) {
         "video_width", _videoConfigSPS->FrameCroppingRectangleWidth()
     ).info("beginning new segment");
 
+    if(_shouldMarkNextSegmentDiscontinuous) {
+        _logger.info("segment created with discontinuity");
+    }
+
     _segment = _storage->createSegment("ts");
+    _segment->metadata.discontinuity = _shouldMarkNextSegmentDiscontinuous;
+    _shouldMarkNextSegmentDiscontinuous = false;
+
     if (!_segment) {
         _logger.error("unable to create segment");
         _endSegment();
