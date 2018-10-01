@@ -29,6 +29,8 @@ cc_library(
         "aws-cpp-sdk-core/source/utils/crypto/openssl/**/*.cpp",
         "aws-cpp-sdk-core/source/utils/crypto/factory/**/*.cpp",
         "aws-cpp-sdk-core/source/platform/linux-shared/*.cpp",
+        "aws-cpp-sdk-core/source/net/*.cpp",
+        "aws-cpp-sdk-core/source/monitoring/*.cpp",
         "aws-cpp-sdk-s3/include/**/*.h",
         "aws-cpp-sdk-s3/source/**/*.cpp",
     ]),
@@ -41,6 +43,7 @@ cc_library(
         "AWS_SDK_VERSION_MAJOR=1",
         "AWS_SDK_VERSION_MINOR=4",
         "AWS_SDK_VERSION_PATCH=30",
+        "CPP_STANDARD=17",
     ],
     includes = [
         "aws-cpp-sdk-core/include",

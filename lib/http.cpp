@@ -39,7 +39,7 @@ struct AWSHTTPClient : HTTPClient {
             awsReq->SetHeaderValue(kv.first.c_str(), kv.second.c_str());
         }
 
-        auto awsResp = awsClient->MakeRequest(*awsReq);
+        auto awsResp = awsClient->MakeRequest(awsReq);
         if (awsResp == nullptr || awsResp->GetResponseCode() == Aws::Http::HttpResponseCode::REQUEST_NOT_MADE) {
             result.error = "unable to make request";
         } else {

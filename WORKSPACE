@@ -115,9 +115,9 @@ http_archive(
 
 new_http_archive(
     name = "aws",
-    urls = ["https://github.com/aws/aws-sdk-cpp/archive/1.4.30.tar.gz"],
-    sha256 = "54097ad7ece5e87f628864dd33d1760b0a4d0a4920b1f431871c7a6d6b8dd8ca",
-    strip_prefix = "aws-sdk-cpp-1.4.30",
+    urls = ["https://github.com/aws/aws-sdk-cpp/archive/1.6.21.tar.gz"],
+    sha256 = "c3be0ee3ed3cf3ee5bd94f478fa6612d1557edd56d9d177f1b0aa39d4e8aabc4",
+    strip_prefix = "aws-sdk-cpp-1.6.21",
     build_file = "third-party/aws/BUILD",
 )
 

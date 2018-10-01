@@ -22,5 +22,5 @@ cc_test(
     srcs = glob(["*_test.cpp", "*_test.hpp"]),
     linkstatic = True,
     tags = ["external"],
-    timeout = "short",
+    timeout = "moderate",
 )

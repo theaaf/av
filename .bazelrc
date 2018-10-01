@@ -1,2 +1,2 @@
-build --cxxopt='-std=c++14' --verbose_failures
+build --cxxopt='-std=c++17' --verbose_failures
 test --verbose_failures --test_output=all --test_arg='--gtest_color=yes' --test_verbose_timeout_warnings
