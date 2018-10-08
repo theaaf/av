@@ -2,3 +2,5 @@
 /segments
 /test-output
 /bazel-*
+
+compile_commands.json

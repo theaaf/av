@@ -1,6 +1,9 @@
 filegroup(
     name = "headers",
-    srcs = ["x264.h", "x264_config.h"],
+    srcs = [
+        "x264.h",
+        "x264_config.h"
+        ],
     visibility = ["//visibility:public"],
 )
 

@@ -6,6 +6,7 @@
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <functional>
 
 #include <asio.hpp>
 

@@ -1,5 +1,16 @@
 load("@//:build.bzl", "template_rule")
 
+filegroup(
+    name = "headers",
+    srcs= [
+        "aws-cpp-sdk-core/include/aws/core/SDKConfig.h",
+    ] + glob([
+        "aws-cpp-sdk-core/include/**/*.h",
+        "aws-cpp-sdk-s3/include/**/*.h",
+        ]),
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "aws",
     deps = [
@@ -35,7 +46,7 @@ cc_library(
         "aws-cpp-sdk-s3/source/**/*.cpp",
     ]),
     hdrs = [
-        "aws-cpp-sdk-core/include/aws/core/SDKConfig.h",
+        ":headers"
     ],
     defines = [
         "ENABLE_CURL_CLIENT",

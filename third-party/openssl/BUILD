@@ -3,9 +3,15 @@ config_setting(
     constraint_values = ["@bazel_tools//platforms:osx"],
 )
 
+filegroup(
+    name = "headers",
+    srcs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "crypto",
-    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
+    hdrs = [":headers"],
     srcs = ["libcrypto.a"],
     includes = ["include"],
     linkopts = select({
@@ -18,7 +24,7 @@ cc_library(
 cc_library(
     name = "ssl",
     deps = [":crypto"],
-    hdrs = glob(["include/openssl/*.h"]) + ["include/openssl/opensslconf.h"],
+    hdrs = [":headers"],
     srcs = ["libssl.a"],
     includes = ["include"],
     visibility = ["//visibility:public"],

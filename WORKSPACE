@@ -1,4 +1,13 @@
+workspace(name = "av")
+
 load('@bazel_tools//tools/build_defs/repo:git.bzl', 'new_git_repository')
+
+http_archive(
+    name = "bazel_compilation_database",
+    url = "https://github.com/grailbio/bazel-compilation-database/archive/0.2.3.tar.gz",
+    sha256 = "23372eaeac4306c6885a10270b6387c8cc06826736b117821391fb5c0983255b",
+    strip_prefix = "bazel-compilation-database-0.2.3",
+)
 
 new_http_archive(
     name = "rtmpdump",
@@ -6,9 +15,14 @@ new_http_archive(
     sha256 = "29e8e76e8629f8dbd80b41c7042e35124d8255125df0dfb597e21563eec578bd",
     strip_prefix = "rtmpdump-5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f",
     build_file_content = """
+filegroup(
+    name = "headers",
+    srcs = glob(["librtmp/*.h"]),
+    visibility = ["//visibility:public"],
+)
 cc_library(
     name = "librtmp",
-    hdrs = glob(["librtmp/*.h"]),
+    hdrs = [":headers"],
     srcs = glob(["librtmp/*.c"]),
     includes = ["."],
     visibility = ["//visibility:public"],
@@ -26,9 +40,14 @@ new_http_archive(
     sha256 = "70345ca9e372a119c361be5e7f846643ee90997da8f88ec73f7491db96e24bbe",
     strip_prefix = "asio-1.10.6",
     build_file_content = """
+filegroup(
+    name = "headers",
+    srcs = glob(["include/**/*.hpp", "include/**/*.ipp"]),
+    visibility = ["//visibility:public"],
+)
 cc_library(
     name = "asio",
-    hdrs = glob(["include/**/*.hpp", "include/**/*.ipp"]),
+    hdrs = [":headers"],
     includes = ["include"],
     visibility = ["//visibility:public"],
     defines = ["ASIO_STANDALONE=1"],
@@ -42,12 +61,26 @@ new_http_archive(
     sha256 = "cda4d9a9ba120424d91b11247f087e400a020a9e057d754966d0df4b0d8049d8",
     strip_prefix = "Simple-Web-Server-bd9c1192bba119ca34eb01e2ad1e0d979c5514c5",
     build_file_content = """
+filegroup(
+    name = "headers",
+    srcs = glob(["*.hpp"]),
+    visibility = ["//visibility:public"],
+)
 cc_library(
     name = "lib",
-    hdrs = glob(["*.hpp"]),
+    hdrs = [":headers"],
     includes = ["."],
     include_prefix = "simple-web-server",
     defines = ["USE_STANDALONE_ASIO=1"],
+    visibility = ["//visibility:public"],
+)
+genrule(
+    name = "headers_prefixed",
+    srcs = [":headers", "server_http.hpp"],
+    outs = ["simple-web-server/server_http.hpp"],
+    cmd = '''
+        cp $(locations headers)  $$(dirname $(location simple-web-server/server_http.hpp))
+    ''',
     visibility = ["//visibility:public"],
 )
 """,
@@ -59,10 +92,15 @@ new_http_archive(
     sha256 = "46628a2f068d0e33c716be0ed9dcae4370242df135aed663a180b9fd8e36733d",
     strip_prefix = "fmt-4.1.0",
     build_file_content = """
+filegroup(
+    name = "headers",
+    srcs = glob(["fmt/*.h"]),
+    visibility = ["//visibility:public"],
+)
 cc_library(
     name = "fmt",
     srcs = glob(["fmt/*.cc"]),
-    hdrs = glob(["fmt/*.h"]),
+    hdrs = [":headers"],
     includes = ["."],
     visibility = ["//visibility:public"],
 )
@@ -75,9 +113,14 @@ new_http_archive(
     sha256 = "8e374ae0efeab6134a7d6b205903f79e3873e6b99a3ae284833931140a5ba1df",
     strip_prefix = "args-6.2.0",
     build_file_content = """
+filegroup(
+    name = "headers",
+    srcs = glob(["args.hxx"]),
+    visibility = ["//visibility:public"],
+)
 cc_library(
     name = "args",
-    hdrs = glob(["args.hxx"]),
+    hdrs = [":headers"],
     includes = ["."],
     visibility = ["//visibility:public"],
 )
@@ -89,9 +132,14 @@ new_http_archive(
     urls = ["https://github.com/nlohmann/json/releases/download/v3.1.2/include.zip"],
     sha256 = "495362ee1b9d03d9526ba9ccf1b4a9c37691abe3a642ddbced13e5778c16660c",
     build_file_content = """
+filegroup(
+    name = "headers",
+    srcs = glob(["include/nlohmann/**/*.hpp"]),
+    visibility = ["//visibility:public"],
+)
 cc_library(
     name = "json",
-    hdrs = glob(["include/nlohmann/**/*.hpp"]),
+    hdrs = [":headers"],
     includes = ["include"],
     visibility = ["//visibility:public"],
 )
@@ -143,4 +191,32 @@ new_http_archive(
     sha256 = "a492452bb35a3cb8eb27b53ef41ac32e3876366625d6399922970932333df372",
     strip_prefix = "x264-snapshot-20180418-2245-stable",
     build_file = "third-party/x264/BUILD",
+)
+
+new_http_archive(
+    name = "clang_osx",
+    url = "http://releases.llvm.org/6.0.0/clang+llvm-6.0.0-x86_64-apple-darwin.tar.xz",
+    sha256 = "0ef8e99e9c9b262a53ab8f2821e2391d041615dd3f3ff36fdf5370916b0f4268",
+    strip_prefix = "clang+llvm-6.0.0-x86_64-apple-darwin",
+    build_file_content = """
+filegroup(
+    name = "clang_check",
+    srcs = ["bin/clang-check"],
+    visibility = ["//visibility:public"],
+)
+    """
+)
+
+new_http_archive(
+    name = "clang_linux",
+    url = "http://releases.llvm.org/7.0.0/clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz",
+    sha256 = "69b85c833cd28ea04ce34002464f10a6ad9656dd2bba0f7133536a9927c660d2",
+    strip_prefix = "clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04",
+    build_file_content = """
+filegroup(
+    name = "clang_check",
+    srcs = ["bin/clang-check"],
+    visibility = ["//visibility:public"],
+)
+    """
 )

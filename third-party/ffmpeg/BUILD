@@ -3,6 +3,21 @@ config_setting(
     constraint_values = ["@bazel_tools//platforms:osx"],
 )
 
+filegroup(
+    name = "headers",
+    srcs = glob([
+        "libavcodec/*.h",
+        "libavformat/*.h",
+        "libavutil/*.h",
+        "config.h",
+        "libavutil/avconfig.h",
+        "libswscale/*.h",
+        "**/*.hpp",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+
 cc_library(
     name = "avcodec",
     deps = [":avutil", "@x264//:x264"],
@@ -93,4 +108,5 @@ genrule(
         cp $$FFMPEG_ROOT/libavutil/avconfig.h $(location libavutil/avconfig.h)
         cp $$FFMPEG_ROOT/libswscale/libswscale.a $(location libswscale.a)
     """,
+    visibility = ["//visibility:public"],
 )

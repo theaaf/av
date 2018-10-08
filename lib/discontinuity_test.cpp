@@ -63,7 +63,7 @@ TEST(Discontinuity, handlingDiscontinuities) {
     };
 
 
-    for (int i = 0; i < runs.size(); i++) {
+    for (size_t i = 0; i < runs.size(); i++) {
         auto run = runs[i];
 
         TestLogDestination logDestination;
@@ -73,7 +73,7 @@ TEST(Discontinuity, handlingDiscontinuities) {
         Packager packager{&logDestination, &segmentStorage};
         splitter.addHandler(&packager);
 
-        for (int j = 0; j < run[0].size(); j++) {
+        for (size_t j = 0; j < run[0].size(); j++) {
             bool injectDiscontinuity = run[0][j];
 
             packager.beginNewSegment();
@@ -86,7 +86,7 @@ TEST(Discontinuity, handlingDiscontinuities) {
         ExerciseEncodedAVHandler(&splitter);
 
         std::lock_guard<std::mutex> l{segmentStorage._mtx};
-        for (int j = 0; j < run[0].size(); j++) {
+        for (size_t j = 0; j < run[0].size(); j++) {
             EXPECT_EQ(run[1][j], segmentStorage.segmentDiscontinuities[j]) << "discontinuity not handled at run " << i << " index " << j;
         }
     }

@@ -1,3 +1,16 @@
+filegroup(
+    name = "sources",
+    srcs = glob(["*.cpp"], exclude=["*_test.cpp"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "headers",
+    srcs = glob(["*.hpp"], exclude=["*_test.cpp"]),
+    visibility = ["//visibility:public"],
+)
+
+
 cc_library(
     name = "lib",
     deps = [
@@ -11,8 +24,8 @@ cc_library(
         "@simple_web_server//:lib",
         "//lib/h264:lib",
     ],
-    srcs = glob(["*.cpp"], exclude=["*_test.cpp"]),
-    hdrs = glob(["*.hpp"], exclude=["*_test.cpp"]),
+    srcs = [":sources"],
+    hdrs = [":headers"],
     visibility = ["//visibility:public"],
 )
 
