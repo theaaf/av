@@ -2,7 +2,7 @@
 
 #include "ffmpeg.hpp"
 
-#include <h264/h264.hpp>
+#include <h26x/h264.hpp>
 
 VideoDecoder::~VideoDecoder() {
     _endDecoding();

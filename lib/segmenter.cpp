@@ -1,6 +1,6 @@
 #include "segmenter.hpp"
 
-#include <h264/h264.hpp>
+#include <h26x/h264.hpp>
 
 void Segmenter::handleEncodedAudioConfig(const void* data, size_t len) {
     std::lock_guard<std::mutex> l{_mutex};

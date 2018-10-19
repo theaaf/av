@@ -20,7 +20,7 @@ filegroup(
 
 cc_library(
     name = "avcodec",
-    deps = [":avutil", "@x264//:x264"],
+    deps = [":avutil", "@x264//:x264", "@x265//:x265"],
     hdrs = glob(["libavcodec/*.h"]) + ["config.h"],
     srcs = ["libavcodec.a"],
     linkopts = select({
@@ -64,7 +64,16 @@ cc_library(
 
 genrule(
     name = "ffmpeg-build",
-    srcs = glob(["**/*"], exclude=["bazel-*"]) + ["@nasm//:nasm", "@x264//:headers", "@x264//:libx264.a"],
+    srcs = glob(["**/*"], exclude=["bazel-*"])
+            + [
+                "@nasm//:nasm",
+                "@x264//:headers",
+                "@x264//:libx264.a",
+                "@x265//:include/x265.h",
+                "@x265//:include/x265_config.h",
+                "@x265//:lib/libx265.a",
+                "@x265//:x265.pc",
+            ],
     outs = [
         "config.h",
         "libavcodec.a",
@@ -74,13 +83,16 @@ genrule(
         "libswscale.a",
     ],
     cmd = """
-        FFMPEG_ROOT=$$(dirname $(location configure))
+        FFMPEG_ROOT=$$(pwd)/$$(dirname $(location configure))
         mkdir $$FFMPEG_ROOT/additional_includes
         cp $(locations @x264//:headers) $$FFMPEG_ROOT/additional_includes
         mkdir $$FFMPEG_ROOT/additional_libs
         cp $(location @x264//:libx264.a) $$FFMPEG_ROOT/additional_libs
         ASM=$$(pwd)/$(location @nasm//:nasm)
-        pushd $$FFMPEG_ROOT 
+        X265_ROOT=$$(pwd)/$$(dirname $(location @x265//:x265.pc))
+        sed "1 s+.*+prefix=$$X265_ROOT+" $(location @x265//:x265.pc) > $$FFMPEG_ROOT/x265.pc
+        pushd $$FFMPEG_ROOT
+            export PKG_CONFIG_PATH=$$FFMPEG_ROOT
             ./configure \
                 --x86asmexe=$$ASM \
                 --disable-everything \
@@ -94,12 +106,15 @@ genrule(
                 --enable-decoder=h264 \
                 --enable-encoder=aac \
                 --enable-encoder=libx264 \
+                --enable-encoder=libx265 \
                 --enable-protocol=file \
                 --enable-gpl \
                 --enable-libx264 \
-                --extra-cflags=-I./additional_includes \
-                --extra-ldflags=-L./additional_libs \
-            && make
+                --enable-libx265 \
+                --extra-cflags='-I./additional_includes' \
+                --extra-ldflags='-L./additional_libs'\
+                --pkg-config-flags="--static" \
+            && make -j8
         popd
         cp $$FFMPEG_ROOT/config.h $(location config.h)
         cp $$FFMPEG_ROOT/libavcodec/libavcodec.a $(location libavcodec.a)

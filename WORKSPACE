@@ -194,6 +194,14 @@ new_http_archive(
 )
 
 new_http_archive(
+    name = "x265",
+    url = "http://ftp.videolan.org/pub/videolan/x265/x265_2.8.tar.gz",
+    sha256 = "6e59f9afc0c2b87a46f98e33b5159d56ffb3558a49d8e3d79cb7fdc6b7aaa863",
+    strip_prefix = "x265_2.8",
+    build_file = "third-party/x265/BUILD",
+)
+
+new_http_archive(
     name = "clang_osx",
     url = "http://releases.llvm.org/6.0.0/clang+llvm-6.0.0-x86_64-apple-darwin.tar.xz",
     sha256 = "0ef8e99e9c9b262a53ab8f2821e2391d041615dd3f3ff36fdf5370916b0f4268",
@@ -216,6 +224,34 @@ new_http_archive(
 filegroup(
     name = "clang_check",
     srcs = ["bin/clang-check"],
+    visibility = ["//visibility:public"],
+)
+    """
+)
+
+new_http_archive(
+    name = "cmake_osx",
+    url = "https://cmake.org/files/v3.12/cmake-3.12.3-Darwin-x86_64.tar.gz",
+    sha256 = "b3bb06382a1ecdf8dbd26cf782e5fa3c2aaface0c1376f6d53d24be8aec324d2",
+    strip_prefix = "cmake-3.12.3-Darwin-x86_64/CMake.app/Contents",
+    build_file_content = """
+filegroup(
+    name = "cmake",
+    srcs = ["bin/cmake"],
+    visibility = ["//visibility:public"],
+)
+    """
+)
+
+new_http_archive(
+    name = "cmake_linux",
+    url = "https://cmake.org/files/v3.12/cmake-3.12.3-Linux-x86_64.tar.gz",
+    sha256 = "0210f500c71af0ee7e8c42da76954298144d5f72f725ea381ae5db7b766b000e",
+    strip_prefix = "cmake-3.12.3-Linux-x86_64",
+    build_file_content ="""
+filegroup(
+    name = "cmake",
+    srcs = ["bin/cmake"],
     visibility = ["//visibility:public"],
 )
     """

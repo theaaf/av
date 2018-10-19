@@ -7,7 +7,7 @@ RUN echo 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8
 RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 
 RUN apt-get update
-RUN apt-get install -y bazel git openjdk-8-jdk libcurl4-openssl-dev make
+RUN apt-get install -y bazel git openjdk-8-jdk libcurl4-openssl-dev make pkg-config
 
 RUN echo 'deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu xenial main' | tee /etc/apt/sources.list.d/gcc8.list
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv BA9EF27F
@@ -20,12 +20,12 @@ WORKDIR /tmp/av
 # go ahead and compile the big dependencies so devs can test other changes reasonably quickly
 COPY .bazelrc build.bzl BUILD WORKSPACE ./
 COPY third-party third-party
-RUN bazel build @openssl//:libssl.a @ffmpeg//:libavformat.a @aws//:aws
+RUN bazel build @openssl//:libssl.a @ffmpeg//:libavformat.a @aws//:aws @clang_linux//:clang_check
 
 COPY . .
 
 RUN bazel test //lib:test
-RUN bazel test //lib/h264:test
+RUN bazel test //lib/h26x:test
 
 RUN bazel build ingest-server
 

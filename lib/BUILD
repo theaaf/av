@@ -22,7 +22,7 @@ cc_library(
         "@aws//:aws",
         "@json//:json",
         "@simple_web_server//:lib",
-        "//lib/h264:lib",
+        "//lib/h26x:lib",
     ],
     srcs = [":sources"],
     hdrs = [":headers"],

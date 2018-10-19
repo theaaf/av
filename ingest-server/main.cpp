@@ -24,17 +24,18 @@ struct EncodingParser {
     void operator()(const std::string& name, const std::string& value, IngestServer::Configuration::Encoding& destination) {
         try {
             auto encoding = json::parse(value);
+            destination.video.codec = (encoding["video"]["codec"] == "h265") ? VideoCodec::x265 : (encoding["video"]["codec"] == "h264") ? VideoCodec::x264 : throw 0;
             destination.video.bitrate = encoding["video"]["bitrate"].get<int>();
             destination.video.width = encoding["video"]["width"].get<int>();
             destination.video.height = encoding["video"]["height"].get<int>();
             if (encoding["video"]["h264_preset"].is_string()) {
-                destination.video.h264Preset = encoding["video"]["h264_preset"].get<std::string>();
+                destination.video.x264.h264Preset = encoding["video"]["h264_preset"].get<std::string>();
             }
             if (encoding["video"]["profile"].is_number()) {
-                destination.video.profileIDC = encoding["video"]["profile"].get<int>();
+                destination.video.x264.profileIDC = encoding["video"]["profile"].get<int>();
             }
             if (encoding["video"]["level"].is_number()) {
-                destination.video.levelIDC = encoding["video"]["level"].get<int>();
+                destination.video.x264.levelIDC = encoding["video"]["level"].get<int>();
             }
         } catch (...) {
             throw args::ParseError("invalid encoding");
@@ -54,6 +55,7 @@ struct FileStorageParser {
 int main(int argc, const char* argv[]) {
     json exampleEncoding = {
         {"video", {
+            {"codec", "h264"},
             {"bitrate", 4000000},
             {"width", 1280},
             {"height", 720},
@@ -74,7 +76,7 @@ int main(int argc, const char* argv[]) {
     args::ValueFlag<std::string> platformAccessToken(parser, "token", "platform access token", {"platform-access-token"});
     args::ValueFlag<std::shared_ptr<FileStorage>, FileStorageParser> archiveStorage(parser, "uri", "uri to archive to", {"archive-storage"});
     args::ValueFlagList<std::shared_ptr<FileStorage>, std::vector, FileStorageParser> segmentStorage(parser, "uri", "uris to write segments to", {"segment-storage"});
-    args::ValueFlagList<IngestServer::Configuration::Encoding, std::vector, EncodingParser> encodings(parser, "encoding", "a/v encoding configuration as json (see below)", {"encoding"});
+    args::ValueFlagList<IngestServer::Configuration::Encoding, std::vector, EncodingParser> encodings(parser, "encoding", "a/v encoding configuration for h264/h265 as json (see below)", {"encoding"});
     try {
         parser.ParseCLI(argc, argv);
     } catch (args::Help) {

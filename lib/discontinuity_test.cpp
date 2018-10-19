@@ -41,8 +41,8 @@ struct DiscontinuitySegmentStorage : public SegmentStorage {
 
 };
 
-TEST(Discontinuity, handlingDiscontinuities) {
-
+template <typename H26xPackager>
+void testHandleDiscontinuities() {
     const std::vector<std::vector<std::vector<bool>>> runs = {
             {       // first segment is always discontinuous
                     {0,0,0,0,0},
@@ -70,7 +70,7 @@ TEST(Discontinuity, handlingDiscontinuities) {
         DiscontinuitySegmentStorage segmentStorage;
         EncodedAVSplitter splitter;
 
-        Packager packager{&logDestination, &segmentStorage};
+        H26xPackager packager{&logDestination, &segmentStorage};
         splitter.addHandler(&packager);
 
         for (size_t j = 0; j < run[0].size(); j++) {
@@ -90,4 +90,14 @@ TEST(Discontinuity, handlingDiscontinuities) {
             EXPECT_EQ(run[1][j], segmentStorage.segmentDiscontinuities[j]) << "discontinuity not handled at run " << i << " index " << j;
         }
     }
+}
+
+TEST(Discontinuity, handlingDiscontinuities_H264Packager) {
+    testHandleDiscontinuities<H264Packager>();
+}
+
+TEST(Discontinuity, handlingDiscontinuities_H265Packager) {
+    // @TODO: make ExcerciseEncodedAVHandler pump HEVC as well
+    /// This will be added in the near future
+    // testHandleDiscontinuities<H265Packager>();
 }

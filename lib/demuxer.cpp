@@ -8,8 +8,8 @@ extern "C" {
 #include "mpeg4.hpp"
 #include "utility.hpp"
 
-#include <h264/h264.hpp>
-#include <h264/nal_unit.hpp>
+#include <h26x/h264.hpp>
+#include <h26x/nal_unit.hpp>
 
 Demuxer::Demuxer(Logger logger, std::string in, EncodedAVHandler* handler) {
     _thread = std::thread([=] {

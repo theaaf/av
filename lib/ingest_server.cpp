@@ -16,10 +16,17 @@ std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& 
         if (_configuration.platformAPI) {
             PlatformAPI::AVStream stream;
             stream.bitrate = encoding.video.bitrate;
-            stream.codecs = {
-                "mp4a.40.2",
-                fmt::format("avc1.{:02x}00{:02x}", encoding.video.profileIDC, encoding.video.levelIDC),
-            };
+            stream.codecs = { "mp4a.40.2" };
+            switch (encoding.video.codec) {
+                case VideoCodec::x264:
+                    stream.codecs.emplace_back(fmt::format("avc1.{:02x}00{:02x}", encoding.video.x264.profileIDC, encoding.video.x264.levelIDC));
+                    break;
+                case VideoCodec::x265:
+                    stream.codecs.emplace_back(fmt::format("hvc1")); // @TODO set correct flags
+                    break;
+                default:
+                    logger.error("unexpected value in encoding.video.codec");
+            }
             stream.maximumSegmentDuration = std::chrono::seconds(30);
             stream.videoHeight = encoding.video.height;
             stream.videoWidth = encoding.video.width;
@@ -63,8 +70,8 @@ IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, 
         _segmenter = std::make_unique<Segmenter>(logger, &_segmentSplitter, [this]{
             _videoDecoder->flush();
             for (auto& encoding : _encodings) {
-                encoding->videoEncoder.flush();
-                encoding->packager.beginNewSegment();
+                encoding->videoEncoder->flush();
+                encoding->packager->beginNewSegment();
             }
         });
         addHandler(_segmenter.get());
@@ -80,7 +87,7 @@ void IngestServer::Stream::addEncoding(size_t index, Configuration::Encoding con
     smConfig.streamId = streamId;
 
     auto encoding = std::make_unique<Encoding>(_logger.with("encoding", index), smConfig, configuration.video);
-    _segmentSplitter.addHandler(dynamic_cast<EncodedAudioHandler*>(&encoding->packager));
-    _decodedSegmentSplitter.addHandler(&encoding->videoEncoder);
+    _segmentSplitter.addHandler(dynamic_cast<EncodedAudioHandler*>(encoding->packager.get()));
+    _decodedSegmentSplitter.addHandler(encoding->videoEncoder.get());
     _encodings.emplace_back(std::move(encoding));
 }

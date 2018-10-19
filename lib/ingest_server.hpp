@@ -24,7 +24,7 @@ public:
         std::string gameId;
 
         struct Encoding {
-            VideoEncoder::Configuration video;
+            VideoEncoderConfiguration video;
         };
 
         std::vector<Encoding> encodings;
@@ -63,15 +63,27 @@ private:
         std::unique_ptr<Archiver> _archiver;
 
         struct Encoding {
-            Encoding(Logger logger, SegmentManager::Configuration smConfiguration, VideoEncoder::Configuration encoderConfiguration)
+            Encoding(Logger logger, SegmentManager::Configuration smConfiguration, VideoEncoderConfiguration encoderConfiguration)
                 : segmentManager{logger, std::move(smConfiguration)}
-                , packager{logger, &segmentManager}
-                , videoEncoder{logger, &packager, std::move(encoderConfiguration)}
-            {}
+            {
+                switch(encoderConfiguration.codec) {
+                    case VideoCodec::x264:
+                        packager = std::make_unique<H264Packager>(logger, &segmentManager);
+                        videoEncoder = std::make_shared<H264VideoEncoder>(logger, packager.get(), std::move(encoderConfiguration));
+                        break;
+                    case VideoCodec::x265:
+                        packager = std::make_unique<H265Packager>(logger, &segmentManager);
+                        videoEncoder = std::make_shared<H265VideoEncoder>(logger, packager.get(), std::move(encoderConfiguration));
+                        break;
+                    default:
+                        logger.error("encoderConfiguration.codec is null. expect a segfault soon");
+                        break;
+                }
+            }
 
             SegmentManager segmentManager;
-            Packager packager;
-            VideoEncoder videoEncoder;
+            std::shared_ptr<Packager> packager;
+            std::shared_ptr<VideoEncoder> videoEncoder;
         };
 
         std::vector<std::unique_ptr<Encoding>> _encodings;

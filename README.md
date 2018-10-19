@@ -4,6 +4,9 @@ This repo is home of the servers that directly route and manipulate audio / vide
 
 ## Building
 
+Dev environment requirements: 
+- pkg-config
+
 Builds are done using [Bazel](https://bazel.build/). For example: `bazel build ingest-server`
 
 You can also perform a Docker build: `docker build . -t av`
@@ -19,7 +22,7 @@ At the moment, the only application here is the ingest server. After building it
 This will start up an ingest server that accepts RTMP connections and does nothing with the streams. For something more interesting, you can pass some flags:
 
 ```
-./bazel-bin/ingest-server/ingest-server --archive-storage file:archive --segment-storage file:segments --encoding '{"video":{"bitrate":4000000,"height":720,"width":1280}}'
+./bazel-bin/ingest-server/ingest-server --archive-storage file:archive --segment-storage file:segments --encoding '{"video":{"codec":"h265",bitrate":4000000,"height":720,"width":1280}}'
 ```
 
 Now, archive files will be written to the ./archive directory, and segments will be written to ./segments.

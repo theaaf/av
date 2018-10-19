@@ -10,5 +10,6 @@ case $OS in
     sed -i '' s+DUMMYROOT+$(pwd)+g analysis/compile_commands.json
     ;;
 esac
-
+echo 'Running clang-check...'
 find . -name '*.cpp' | xargs ./external/clang_*/bin/clang-check -p analysis/compile_commands.json -analyze
+echo 'Finished clang-check'

@@ -41,7 +41,7 @@ sh_library(
         "@rtmpdump//:headers",
         "@ffmpeg//:ffmpeg-build",
         "@ffmpeg//:headers",
-        "//lib/h264:headers_prefixed",
+        "//lib/h26x:headers_prefixed",
     ] + select({
         ":clang_osx":  ["@clang_osx//:clang_check"],
         ":clang_linux":["@clang_linux//:clang_check"]

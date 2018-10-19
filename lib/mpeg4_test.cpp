@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <h264/h264.hpp>
+#include <h26x/h264.hpp>
 
 #include "mpeg4.hpp"
 
@@ -53,4 +53,46 @@ TEST(AVCDecoderConfigurationRecord, decode) {
     ASSERT_EQ(1, config.pictureParameterSets.size());
     ASSERT_EQ(4, config.pictureParameterSets[0].size());
     EXPECT_EQ(0, memcmp(data + sizeof(data) - 4, config.pictureParameterSets[0].data(), config.pictureParameterSets[0].size()));
+}
+
+TEST(HEVCDecoderConfigurationRecord, encode_and_decode) {
+    HEVCDecoderConfigurationRecord config;
+
+    config.general_tier_flag = 45;
+    config.avgFrameRate = 30003;
+    config.chromaFormat = 252;
+    config.general_profile_compatibility_flags = 0x14'01'00'f9;
+    config.general_constraint_indicator_flags = 0x80'01'23'45'66'11'00'64;
+
+    HVCCArray array1{1, 12, 2}; // completeness, type, numNalus
+    array1.nalUnitLength.emplace_back(10);
+    array1.nalUnitLength.emplace_back(14);
+
+    std::vector<uint8_t> nalu1{1,2,3,4,5,6,7,8,9,10};
+    std::vector<uint8_t> nalu2{1,2,3,4,5,6,7,8,9,10,11,12,13,14};
+
+    array1.nalUnit.emplace_back(std::move(nalu1));
+    array1.nalUnit.emplace_back(std::move(nalu2));
+
+    config.naluArrays.emplace_back(std::move(array1));
+    config.numOfArrays++;
+
+    std::vector<uint8_t> randomNalu{112,21,34,65,34,78,43,56,62,43,13,75,87,35,23,64,75,45,123,0};
+    config.addNalu(randomNalu.data(), randomNalu.size());
+    config.addNalu(randomNalu.data(), randomNalu.size());
+    config.addNalu(randomNalu.data(), randomNalu.size());
+    config.addNalu(randomNalu.data(), randomNalu.size());
+
+    randomNalu[0] = 11;
+    randomNalu[1] = 33;
+
+    config.addNalu(randomNalu.data(), randomNalu.size());
+    config.addNalu(randomNalu.data(), randomNalu.size());
+
+    auto encoded = config.encode();
+
+    HEVCDecoderConfigurationRecord config2;
+    ASSERT_TRUE(config2.decode(encoded.data(), encoded.size()));
+
+    ASSERT_TRUE(config == config2);
 }

@@ -8,7 +8,7 @@
 #include "mpeg4.hpp"
 #include "mpegts_test.hpp"
 
-#include <h264/h264.hpp>
+#include <h26x/h264.hpp>
 
 TEST(Demuxer, demuxing) {
     struct Handler : EncodedAVHandler {

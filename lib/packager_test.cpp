@@ -45,7 +45,7 @@ TEST(Packager, packaging) {
     TestLogDestination logDestination;
 
     {
-        Packager packager{&logDestination, &storage};
+        H264Packager packager{&logDestination, &storage};
         Segmenter segmenter{&logDestination, &packager, [&]{
             packager.beginNewSegment();
         }};
