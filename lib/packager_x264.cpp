@@ -7,7 +7,7 @@
 #include "ffmpeg.hpp"
 
 void H264Packager::_beginSegment(std::chrono::microseconds pts) {
-    _endSegment();
+    _endSegment(true, pts);
     InitFFmpeg();
 
     if (!_audioConfig || !std::holds_alternative<UniqueAVCDecoderRecord>(_decoderRecord)) {

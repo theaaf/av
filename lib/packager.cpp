@@ -32,7 +32,7 @@ void Packager::beginNewSegment() {
     _shouldBeginNewSegment = true;
 }
 
-void Packager::_endSegment(bool writeTrailer) {
+void Packager::_endSegment(bool writeTrailer, std::chrono::microseconds nextSegmentPTS) {
     if (_outputContext) {
         if (writeTrailer) {
             av_write_trailer(_outputContext);
@@ -44,13 +44,25 @@ void Packager::_endSegment(bool writeTrailer) {
     }
 
     if (_segment) {
-        auto duration = _maxVideoPTS - _segmentPTS;
+        std::chrono::microseconds duration;
+
+        if (nextSegmentPTS != std::chrono::microseconds::zero()) {
+            auto gap = std::chrono::duration_cast<std::chrono::milliseconds>(nextSegmentPTS - _maxVideoPTS);
+            if (gap.count() > 100) {
+                _logger.with("_nextSegmentPTS - _maxVideoPTS", gap.count()).warn("encoder might not be keeping up; duration may not be accurate");
+            }
+            duration = nextSegmentPTS - _segmentPTS;
+        } else {
+            duration = _maxVideoPTS - _lastMaxVideoPTS;
+        }
+
         _logger.with("duration_ms", std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()).info("closing segment");
         if (!_segment->close(duration)) {
             _logger.error("unable to close segment");
         }
         _segment = nullptr;
     }
+    _lastMaxVideoPTS = _maxVideoPTS;
 }
 
 void Packager::handleEncodedAudioConfig(const void* data, size_t len) {

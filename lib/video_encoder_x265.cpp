@@ -44,6 +44,12 @@ void H265VideoEncoder::_beginEncoding(int inputWidth, int inputHeight, AVPixelFo
 
     AVDictionary* options = nullptr;
     // @TODO: figure out options
+    av_dict_set(&options, "bframes", "0", 0);
+    av_dict_set(&options, "b-adapt", "0", 0);
+    av_dict_set(&options, "rc-lookahead", "0", 0);
+    av_dict_set(&options, "no-cenecut", "", 0);
+    av_dict_set(&options, "no-cutree", "", 0);
+    av_dict_set(&options, "frame-threads", "1", 0);
 
     auto err = avcodec_open2(_context, codec, &options);
     if (err < 0) {

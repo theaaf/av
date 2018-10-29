@@ -49,9 +49,11 @@ genrule(
         X265_ROOT=$$(dirname $(location source/CMakeLists.txt))
         CMAKE=$$(pwd)/$(location cmake)
         AS=$$(pwd)/$(location @nasm//:nasm)
+        export PATH=$${AS}:$${PATH}
+        export CMAKE_ASM_NASM_COMPILER=$${AS}
         pushd $$X265_ROOT
-            AS=$$AS $$CMAKE -DCMAKE_INSTALL_PREFIX=$$(dirname $(location x265.pc)) -DENABLE_SHARED:bool=off .
-            make -j8
+            AS=$$AS $$CMAKE -DCMAKE_INSTALL_PREFIX=$$(dirname $(location x265.pc))  ../source
+            AS=$$AS make -j8
         popd
         cp $$X265_ROOT/x265.h $(location include/x265.h)
         cp $$X265_ROOT/x265_config.h $(location include/x265_config.h)

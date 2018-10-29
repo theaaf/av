@@ -3,7 +3,7 @@
 #include <h26x/h265.hpp>
 
 void H265Packager::_beginSegment(std::chrono::microseconds pts) {
-    _endSegment();
+    _endSegment(true, pts);
     InitFFmpeg();
 
     if (!_audioConfig || !std::holds_alternative<UniqueHEVCDecoderRecord>(_decoderRecord)) {

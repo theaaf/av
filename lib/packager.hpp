@@ -58,9 +58,10 @@ protected:
 
     std::chrono::microseconds _segmentPTS;
     std::chrono::microseconds _maxVideoPTS = std::chrono::microseconds::min();
+    std::chrono::microseconds _lastMaxVideoPTS = std::chrono::microseconds::zero();
 
     virtual void _beginSegment(std::chrono::microseconds pts) = 0;
-    void _endSegment(bool writeTrailer = true);
+    void _endSegment(bool writeTrailer = true, std::chrono::microseconds nextSegmentPTS = std::chrono::microseconds::zero());
 
     static int _writePacket(void* opaque, uint8_t* buf, int len);
 };
