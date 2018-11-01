@@ -29,6 +29,7 @@ genrule(
             AS=$$AS ./configure \
                 --disable-cli \
                 --enable-static \
+                --enable-pic \
             && make -j8
         popd
         cp $$X264_ROOT/x264_config.h $(location x264_config.h)

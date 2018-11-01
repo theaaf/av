@@ -111,8 +111,8 @@ genrule(
                 --enable-gpl \
                 --enable-libx264 \
                 --enable-libx265 \
-                --extra-cflags='-I./additional_includes' \
-                --extra-ldflags='-L./additional_libs'\
+                --extra-cflags='-I./additional_includes -I.' \
+                --extra-ldflags='-L./additional_libs -L.'\
                 --pkg-config-flags="--static" \
             && make -j8
         popd
