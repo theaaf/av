@@ -30,12 +30,14 @@ RUN bazel run //analysis:clang-check
 FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
-        libcurl4-openssl-dev \
+        libcurl4-openssl-dev libxext6 libgl1-mesa-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/av/bin
 
 COPY --from=0 /tmp/av/bazel-bin/ingest-server/ingest-server .
+COPY --from=0 /tmp/av/bazel-av/external/decklink/Linux/Samples/NVIDIA_GPUDirect/x86_64/libdvp.so /opt/lib/libdvp.so
+ENV LD_LIBRARY_PATH "/opt/lib/"
 RUN /opt/av/bin/ingest-server --help > /dev/null
 
 ENV PATH "/opt/av/bin:$PATH"

@@ -9,6 +9,13 @@ http_archive(
     strip_prefix = "bazel-compilation-database-0.2.3",
 )
 
+http_archive(
+    name = "decklink",
+    url = "https://github.aaf.cloud/av/Decklink-SDK/archive/bazel-0.7.tar.gz",
+    sha256 = "13850a92cdae0391f1ccb1f268ba78da7b8888d8e7858f11ab8919810fd70e36",
+    strip_prefix = "Decklink-SDK-bazel-0.7",
+)
+
 new_http_archive(
     name = "rtmpdump",
     urls = ["https://github.aaf.cloud/av/rtmpdump/archive/5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f.tar.gz"],

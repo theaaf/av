@@ -23,6 +23,8 @@ cc_library(
         "@json//:json",
         "@simple_web_server//:lib",
         "//lib/h26x:lib",
+        "//lib/fastmemory",
+        "@decklink//:DVPAPI",
     ],
     srcs = [":sources"],
     hdrs = [":headers"],
