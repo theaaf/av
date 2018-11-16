@@ -6,8 +6,8 @@
 #include "mpeg4.hpp"
 #include "utility.hpp"
 
-#define STR2AVAL(av, str) av.av_val = const_cast<char*>(str); av.av_len = strlen(av.av_val)
-#define SAVCX(name, x) static const AVal name = {const_cast<char*>(x), sizeof(x)-1}
+#define STR2AVAL(av, str) av.av_val = const_cast<char*>(str); av.av_len = strlen(av.av_val) // NOLINT(cppcoreguidelines-pro-type-const-cast)
+#define SAVCX(name, x) static const AVal name = {const_cast<char*>(x), sizeof(x)-1} // NOLINT(cppcoreguidelines-pro-type-const-cast)
 #define SAVC(x) SAVCX(av_##x, #x)
 
 SAVC(connect);

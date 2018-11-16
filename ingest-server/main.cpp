@@ -21,6 +21,7 @@ void signalHandler(int signal) {
 Logger gLogger;
 
 struct EncodingParser {
+    // NOLINTNEXTLINE(misc-unused-parameters)
     void operator()(const std::string& name, const std::string& value, IngestServer::Configuration::Encoding& destination) {
         try {
             auto encoding = json::parse(value);
@@ -44,6 +45,7 @@ struct EncodingParser {
 };
 
 struct FileStorageParser {
+    // NOLINTNEXTLINE(misc-unused-parameters)
     void operator()(const std::string& name, const std::string& value, std::shared_ptr<FileStorage>& destination) {
         destination = FileStorageForURI(gLogger, value);
         if (!destination) {

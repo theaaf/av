@@ -53,3 +53,9 @@ sh_binary(
     srcs = ["clang-checker.sh"],
     deps = [":analyze_lib",],
 )
+
+sh_binary(
+    name = "clang-tidy",
+    srcs = ["clang-tidy.sh"],
+    deps = [":analyze_lib"],
+)

@@ -216,7 +216,10 @@ new_http_archive(
     build_file_content = """
 filegroup(
     name = "clang_check",
-    srcs = ["bin/clang-check"],
+    srcs = [
+        "bin/clang-check",
+        "bin/clang-tidy",
+    ],
     visibility = ["//visibility:public"],
 )
     """
@@ -230,7 +233,10 @@ new_http_archive(
     build_file_content = """
 filegroup(
     name = "clang_check",
-    srcs = ["bin/clang-check"],
+    srcs = [
+        "bin/clang-check",
+        "bin/clang-tidy",
+    ],
     visibility = ["//visibility:public"],
 )
     """

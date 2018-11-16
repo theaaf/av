@@ -26,6 +26,7 @@ RUN bazel test //lib/h26x:test
 RUN bazel build ingest-server
 
 RUN bazel run //analysis:clang-check
+RUN bazel run //analysis:clang-tidy
 
 FROM ubuntu:18.04
 
@@ -36,8 +37,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /opt/av/bin
 
 COPY --from=0 /tmp/av/bazel-bin/ingest-server/ingest-server .
-COPY --from=0 /tmp/av/bazel-av/external/decklink/Linux/Samples/NVIDIA_GPUDirect/x86_64/libdvp.so /opt/lib/libdvp.so
-ENV LD_LIBRARY_PATH "/opt/lib/"
 RUN /opt/av/bin/ingest-server --help > /dev/null
 
 ENV PATH "/opt/av/bin:$PATH"

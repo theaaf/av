@@ -35,6 +35,8 @@ struct ConsoleLogDestination : Logger::Destination {
 Logger::Destination* const Logger::Console{&gConsoleLogDestination};
 
 struct VoidLogDestination : Logger::Destination {
+
+    // NOLINTNEXTLINE(misc-unused-parameters)
     virtual void log(Logger::Severity severity, const std::string& message, const std::vector<Logger::Field>& fields) override {}
 } gVoidLogDestination;
 
