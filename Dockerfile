@@ -23,6 +23,7 @@ COPY . .
 RUN bazel test //lib:test
 RUN bazel test //lib/h26x:test
 
+RUN bazel build archiver
 RUN bazel build ingest-server
 
 RUN bazel run //analysis:clang-check
@@ -35,6 +36,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/av/bin
+
+COPY --from=0 /tmp/av/bazel-bin/archiver/archiver .
+RUN /opt/av/bin/archiver --help > /dev/null
 
 COPY --from=0 /tmp/av/bazel-bin/ingest-server/ingest-server .
 RUN /opt/av/bin/ingest-server --help > /dev/null

@@ -25,7 +25,14 @@ std::shared_ptr<FileStorage> FileStorageForURI(Logger logger, const std::string&
         return std::make_shared<LocalFileStorage>(logger, uri.substr(authorityPart));
     }
     if (scheme == "s3") {
-        return std::make_shared<S3FileStorage>(logger, uri.substr(authorityPart));
+        std::string prefix;
+        auto bucket = uri.substr(authorityPart);
+        auto slash = bucket.find('/');
+        if (slash != std::string::npos) {
+            prefix = bucket.substr(slash);
+            bucket = bucket.substr(0, slash);
+        }
+        return std::make_shared<S3FileStorage>(logger, std::move(bucket), std::move(prefix));
     }
     return nullptr;
 }
@@ -172,16 +179,37 @@ bool S3FileStorage::File::_uploadPart() {
     return true;
 }
 
+std::string S3KeyJoin(const std::string& a, const std::string& b) {
+    std::string ret = a;
+    while (!ret.empty() && *ret.rbegin() == '/') {
+        ret = ret.substr(0, ret.size() - 1);
+    }
+    if (!ret.empty()) {
+        ret += '/';
+    }
+    size_t i = 0;
+    while (b.size() > i && b[i] == '/') {
+        ++i;
+    }
+    ret += b.substr(i);
+    return ret;
+}
+
 std::string S3FileStorage::downloadURL(const std::string& path) {
-    return "https://s3.amazonaws.com/" + _bucket + "/" + path;
+    return "https://s3.amazonaws.com/" + _bucket + "/" + S3KeyJoin(_prefix, path);
 }
 
 std::shared_ptr<FileStorage::File> S3FileStorage::createFile(const std::string& path) {
     InitAWS();
 
+    auto key = path;
+    if (!_prefix.empty()) {
+        key = S3KeyJoin(_prefix, path);
+    }
+
     Aws::S3::Model::CreateMultipartUploadRequest request;
     request.SetBucket(_bucket.c_str());
-    request.SetKey(path.c_str());
+    request.SetKey(key.c_str());
 
     auto outcome = _s3Client->CreateMultipartUpload(request);
     if (!outcome.IsSuccess()) {
@@ -191,8 +219,8 @@ std::shared_ptr<FileStorage::File> S3FileStorage::createFile(const std::string& 
 
     std::string uploadId{outcome.GetResult().GetUploadId()};
     auto logger = _logger.with("upload_id", uploadId);
-    logger.with("key", path).info("created new multipart upload");
-    return std::make_shared<File>(logger, _s3Client, _bucket, path, uploadId);
+    logger.with("key", key).info("created new multipart upload");
+    return std::make_shared<File>(logger, _s3Client, _bucket, key, uploadId);
 }
 
 AsyncFile::AsyncFile(FileStorage* storage, const std::string& path) {

@@ -28,6 +28,7 @@ TEST(FileStorageForURI, s3Scheme) {
     TestLogDestination logDestination;
     EXPECT_TRUE(FileStorageForURI(&logDestination, "s3:foo"));
     EXPECT_TRUE(FileStorageForURI(&logDestination, "s3://foo"));
+    EXPECT_TRUE(FileStorageForURI(&logDestination, "s3://foo/bar"));
 }
 
 TEST(FileStorageForURI, unknownScheme) {
@@ -124,7 +125,7 @@ TEST(S3FileStorage, storage) {
     }
 
     TestLogDestination logDestination;
-    S3FileStorage storage(&logDestination, bucket, client);
+    S3FileStorage storage(&logDestination, bucket, "dir", client);
 
     auto file = storage.createFile("foo");
     ASSERT_NE(file, nullptr);
@@ -135,7 +136,7 @@ TEST(S3FileStorage, storage) {
     ASSERT_TRUE(file->close());
 
     {
-        auto outcome = client->GetObject(Aws::S3::Model::GetObjectRequest{}.WithBucket(bucket).WithKey("foo"));
+        auto outcome = client->GetObject(Aws::S3::Model::GetObjectRequest{}.WithBucket(bucket).WithKey("dir/foo"));
         ASSERT_TRUE(outcome.IsSuccess());
     }
 }

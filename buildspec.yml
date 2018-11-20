@@ -11,6 +11,7 @@ phases:
       - docker build -t av .
       - docker tag av $ECR_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO_NAME:$(git rev-parse HEAD)
       - echo smoke testing image...
+      - docker run --rm av archiver --help
       - docker run --rm av ingest-server --help
   post_build:
     commands:

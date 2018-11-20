@@ -2,6 +2,7 @@
 !/.bazelrc
 !/BUILD
 !/build.bzl
+!/archiver
 !/ingest-server
 !/lib
 !/third-party

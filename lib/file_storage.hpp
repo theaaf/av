@@ -68,8 +68,8 @@ private:
 class S3FileStorage : public FileStorage {
 public:
     // If you provide your own s3Client (e.g. for testing), make sure you call InitAWS first.
-    explicit S3FileStorage(Logger logger, std::string bucket, std::shared_ptr<Aws::S3::S3Client> s3Client = nullptr)
-        : _logger{std::move(logger)}, _bucket{std::move(bucket)}, _s3Client{std::move(s3Client)}
+    explicit S3FileStorage(Logger logger, std::string bucket, std::string prefix = "", std::shared_ptr<Aws::S3::S3Client> s3Client = nullptr)
+        : _logger{std::move(logger)}, _bucket{std::move(bucket)}, _prefix{std::move(prefix)}, _s3Client{std::move(s3Client)}
     {
         if (!_s3Client) {
             InitAWS();
@@ -109,6 +109,7 @@ public:
 private:
     const Logger _logger;
     const std::string _bucket;
+    const std::string _prefix;
     std::shared_ptr<Aws::S3::S3Client> _s3Client;
 };
 
