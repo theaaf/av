@@ -24,7 +24,7 @@ std::shared_ptr<SegmentStorage::Segment> SegmentManager::createSegment(const std
     return segment;
 }
 
-SegmentManager::Segment::Segment(Logger logger, const SegmentManager::Configuration& configuration, const std::string& path, int64_t segmentNumber) {
+SegmentManager::Segment::Segment(const Logger& logger, const SegmentManager::Configuration& configuration, const std::string& path, int64_t segmentNumber) {
     for (auto fs : configuration.storage) {
         auto url = fs->downloadURL(path);
         Replica replica;

@@ -51,7 +51,7 @@ private:
 
     class Stream : public EncodedAVSplitter {
     public:
-        Stream(Logger logger, const Configuration& configuratiton, std::string connectionId);
+        Stream(Logger logger, const Configuration& configuration, const std::string& connectionId);
         virtual ~Stream() {}
 
         void addEncoding(size_t index, Configuration::Encoding configuration, std::string streamId = "");

@@ -11,7 +11,7 @@ void H265Packager::_beginSegment(std::chrono::microseconds pts) {
     }
     auto& videoConfig = std::get<UniqueHEVCDecoderRecord>(_decoderRecord);
 
-    if (videoConfig.get() == nullptr) {
+    if (videoConfig == nullptr) {
         _logger.error("UniqueHEVCDecoderRecord is holding a nullptr");
         _decoderRecord = nullptr;
         return;
@@ -154,7 +154,7 @@ void H265Packager::handleEncodedVideo(std::chrono::microseconds pts, std::chrono
         return;
     }
 
-    AVPacket packet{0};
+    AVPacket packet{};
     av_init_packet(&packet);
     _inputBuffer.clear();
     _inputBuffer.insert(_inputBuffer.end(), reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + len);

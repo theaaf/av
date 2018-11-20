@@ -25,7 +25,7 @@ struct EncodingParser {
     void operator()(const std::string& name, const std::string& value, IngestServer::Configuration::Encoding& destination) {
         try {
             auto encoding = json::parse(value);
-            destination.video.codec = (encoding["video"]["codec"] == "h265") ? VideoCodec::x265 : (encoding["video"]["codec"] == "h264") ? VideoCodec::x264 : throw 0;
+            destination.video.codec = (encoding["video"]["codec"] == "h265") ? VideoCodec::x265 : (encoding["video"]["codec"] == "h264") ? VideoCodec::x264 : throw std::invalid_argument("codec not specified");
             destination.video.bitrate = encoding["video"]["bitrate"].get<int>();
             destination.video.width = encoding["video"]["width"].get<int>();
             destination.video.height = encoding["video"]["height"].get<int>();
@@ -70,7 +70,7 @@ int main(int argc, const char* argv[]) {
         "This is the ingest server. It receives RTMP connections, archives the raw streams, and redistributes the streams to the transcoders and CDNs.", (
         "Storage URIs can be of the form \"file:my-directory\" or \"s3:my-bucket\". "
         "Encodings are JSON strings of the form " + exampleEncoding.dump() + "."
-    ).c_str());
+    ));
     parser.helpParams.width = 120;
     args::HelpFlag help(parser, "help", "display this help", {'h', "help"});
     args::ValueFlag<std::string> gameId(parser, "gameId", "id of the game to submit segments for", {"gameId"});
@@ -81,10 +81,10 @@ int main(int argc, const char* argv[]) {
     args::ValueFlagList<IngestServer::Configuration::Encoding, std::vector, EncodingParser> encodings(parser, "encoding", "a/v encoding configuration for h264/h265 as json (see below)", {"encoding"});
     try {
         parser.ParseCLI(argc, argv);
-    } catch (args::Help) {
+    } catch (args::Help&) {
         std::cout << parser;
         return 0;
-    } catch (args::ParseError e) {
+    } catch (args::ParseError& e) {
         gLogger.error(e.what());
         std::cerr << parser;
         return 1;
@@ -100,7 +100,7 @@ int main(int argc, const char* argv[]) {
         configuration.archiveFileStorage = args::get(archiveStorage).get();
     }
 
-    for (auto storage : segmentStorage) {
+    for (auto const& storage : segmentStorage) {
         configuration.segmentFileStorage.emplace_back(storage.get());
     }
 

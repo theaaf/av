@@ -4,10 +4,10 @@
 #include <iomanip>
 
 struct ConsoleLogDestination : Logger::Destination {
-    virtual void log(Logger::Severity severity, const std::string& message, const std::vector<Logger::Field>& fields) override {
+    void log(Logger::Severity severity, const std::string& message, const std::vector<Logger::Field>& fields) override {
         auto now = std::chrono::system_clock::now();
         auto nowT = std::chrono::system_clock::to_time_t(now);
-        struct tm tm;
+        struct tm tm{};
         localtime_r(&nowT, &tm);
 
         std::string severityString;
@@ -37,7 +37,7 @@ Logger::Destination* const Logger::Console{&gConsoleLogDestination};
 struct VoidLogDestination : Logger::Destination {
 
     // NOLINTNEXTLINE(misc-unused-parameters)
-    virtual void log(Logger::Severity severity, const std::string& message, const std::vector<Logger::Field>& fields) override {}
+    void log(Logger::Severity severity, const std::string& message, const std::vector<Logger::Field>& fields) override {}
 } gVoidLogDestination;
 
 Logger::Destination* const Logger::Void{&gVoidLogDestination};

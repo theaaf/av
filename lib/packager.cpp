@@ -73,7 +73,8 @@ void Packager::handleEncodedAudioConfig(const void* data, size_t len) {
         _logger.error("unable to decode audio config");
         _endSegment();
         return;
-    } else if (_audioConfig && *config == *_audioConfig) {
+    }
+    if (_audioConfig && *config == *_audioConfig) {
         return;
     }
 
@@ -91,7 +92,7 @@ void Packager::handleEncodedAudio(std::chrono::microseconds pts, const void* dat
     std::memcpy(&_inputBuffer[0], adts.data(), adts.size());
     std::memcpy(&_inputBuffer[adts.size()], data, len);
 
-    AVPacket packet{0};
+    AVPacket packet{};
     av_init_packet(&packet);
     packet.data = _inputBuffer.data();
     packet.size = _inputBuffer.size();

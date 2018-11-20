@@ -6,7 +6,7 @@
 
 std::string GenerateUUID() {
     InitAWS();
-    std::string uuid = Aws::String(Aws::Utils::UUID::RandomUUID()).c_str();
+    std::string uuid{Aws::String(Aws::Utils::UUID::RandomUUID())};
     std::transform(uuid.begin(), uuid.end(), uuid.begin(), ::tolower);
     return uuid;
 }

@@ -1,7 +1,7 @@
 #include "archiver.hpp"
 
 Archiver::Archiver(Logger logger, FileStorage* storage, std::string pathFormat)
-    : _logger{std::move(logger)}, _storage{std::move(storage)}, _pathFormat{std::move(pathFormat)}
+    : _logger{std::move(logger)}, _storage{storage}, _pathFormat{std::move(pathFormat)}
 {
     _thread = std::thread([this] {
         _run();
@@ -101,7 +101,7 @@ void Archiver::_run() {
     _logger.info("archiver thread exiting");
 }
 
-void Archiver::_write(ArchiveDataType type, std::function<void(uint8_t*)> write, size_t len) {
+void Archiver::_write(ArchiveDataType type, const std::function<void(uint8_t*)>& write, size_t len) {
     auto steadyTime = std::chrono::steady_clock::now();
     auto systemTime = std::chrono::system_clock::now();
 

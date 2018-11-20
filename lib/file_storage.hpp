@@ -115,7 +115,7 @@ private:
 // AsyncFile creates, writes, and closes a file asynchronously.
 class AsyncFile {
 public:
-    AsyncFile(FileStorage* storage, std::string path);
+    AsyncFile(FileStorage* storage, const std::string& path);
     ~AsyncFile();
 
     void write(std::shared_ptr<std::vector<uint8_t>> data);

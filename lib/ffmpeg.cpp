@@ -15,7 +15,7 @@ namespace {
 }
 
 void ffmpegLog(void* avcl, int level, const char* str) {
-    std::string tag = "";
+    std::string tag{};
 
     Logger logger;
 
@@ -60,7 +60,7 @@ void ffmpegLogCallback(void* avcl, int level, const char* format, va_list args) 
 
     va_list tmp;
     va_copy(tmp, args);
-    auto n = vsnprintf(buf, sizeof(buf), format, tmp);
+    auto n = vsnprintf(buf, sizeof(buf), format, tmp); // NOLINT(clang-analyzer-valist.Uninitialized)
     va_end(tmp);
 
     if (n < 0) {
@@ -98,7 +98,7 @@ std::unordered_map<const void*, Logger> _ffmpegLogContexts;
 
 void RegisterFFmpegLogContext(const void* context, Logger logger) {
     std::lock_guard<std::mutex> l{_ffmpegLogContextMutex};
-    _ffmpegLogContexts[context] = logger;
+    _ffmpegLogContexts[context] = std::move(logger);
 }
 
 void UnregisterFFmpegLogContext(const void* context) {

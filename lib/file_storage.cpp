@@ -12,7 +12,7 @@
 #include <aws/s3/model/CompleteMultipartUploadRequest.h>
 
 std::shared_ptr<FileStorage> FileStorageForURI(Logger logger, const std::string& uri) {
-    auto colon = uri.find(":");
+    auto colon = uri.find(':');
     if (colon == std::string::npos) {
         return nullptr;
     }
@@ -23,13 +23,14 @@ std::shared_ptr<FileStorage> FileStorageForURI(Logger logger, const std::string&
     }
     if (scheme == "file") {
         return std::make_shared<LocalFileStorage>(logger, uri.substr(authorityPart));
-    } else if (scheme == "s3") {
+    }
+    if (scheme == "s3") {
         return std::make_shared<S3FileStorage>(logger, uri.substr(authorityPart));
     }
     return nullptr;
 }
 
-static std::unordered_map<std::string, std::string> _mimeTypes = {
+static std::unordered_map<std::string, std::string> _mimeTypes = { // NOLINT (cert-err58-cpp)
     {"ts", "video/MP2T"},
 };
 
@@ -52,7 +53,7 @@ LocalFileStorage::LocalFileStorage(Logger logger, std::string directory) : _logg
         SimpleWeb::CaseInsensitiveMultimap headers;
 
         std::string ext;
-        auto period = request->path.rfind(".");
+        auto period = request->path.rfind('.');
         if (period != std::string::npos) {
             ext = request->path.substr(period + 1);
         }
@@ -101,11 +102,11 @@ std::shared_ptr<FileStorage::File> LocalFileStorage::createFile(const std::strin
     // TODO: eventually we'll be able to use the c++17 filesystem library
     auto filePath = _directory + "/" + path;
     auto parentDirectory = _directory;
-    auto lastSlash = path.rfind("/");
+    auto lastSlash = path.rfind('/');
     if (lastSlash != std::string::npos) {
         parentDirectory = _directory + "/" + path.substr(0, lastSlash);
     }
-    system(("mkdir -p " + parentDirectory).c_str());
+    system(("mkdir -p " + parentDirectory).c_str()); // NOLINT(cert-env33-c)
     auto f = std::fopen(filePath.c_str(), "wb");
     auto logger = _logger.with("directory", _directory, "path", path);
     if (!f) {
@@ -188,13 +189,13 @@ std::shared_ptr<FileStorage::File> S3FileStorage::createFile(const std::string& 
         return nullptr;
     }
 
-    std::string uploadId = outcome.GetResult().GetUploadId().c_str();
+    std::string uploadId{outcome.GetResult().GetUploadId()};
     auto logger = _logger.with("upload_id", uploadId);
     logger.with("key", path).info("created new multipart upload");
     return std::make_shared<File>(logger, _s3Client, _bucket, path, uploadId);
 }
 
-AsyncFile::AsyncFile(FileStorage* storage, std::string path) {
+AsyncFile::AsyncFile(FileStorage* storage, const std::string& path) {
     _thread = std::thread([this, storage, path] {
         auto f = storage->createFile(path);
 

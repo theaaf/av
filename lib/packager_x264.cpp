@@ -15,7 +15,7 @@ void H264Packager::_beginSegment(std::chrono::microseconds pts) {
     }
     auto& videoConfig = std::get<UniqueAVCDecoderRecord>(_decoderRecord);
 
-    if (videoConfig.get() == nullptr) {
+    if (videoConfig == nullptr) {
         _logger.error("UniqueAVCDecoderRecord is holding a nullptr");
         _decoderRecord = nullptr;
         return;
@@ -62,10 +62,10 @@ void H264Packager::_beginSegment(std::chrono::microseconds pts) {
     _videoStream->codecpar->height = _videoConfigSPS->FrameCroppingRectangleHeight();
 
     size_t extraDataSize = 0;
-    for (auto sps : videoConfig->sequenceParameterSets) {
+    for (auto const& sps : videoConfig->sequenceParameterSets) {
         extraDataSize += 3 + sps.size();
     }
-    for (auto pps : videoConfig->pictureParameterSets) {
+    for (auto const& pps : videoConfig->pictureParameterSets) {
         extraDataSize += 3 + pps.size();
     }
     auto ptr = reinterpret_cast<uint8_t*>(av_malloc(extraDataSize + AV_INPUT_BUFFER_PADDING_SIZE));
@@ -180,7 +180,7 @@ void H264Packager::handleEncodedVideo(std::chrono::microseconds pts, std::chrono
         return;
     }
 
-    AVPacket packet{0};
+    AVPacket packet{};
     av_init_packet(&packet);
     packet.data = _inputBuffer.data();
     packet.size = _inputBuffer.size();

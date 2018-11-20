@@ -32,7 +32,7 @@ private:
 
     class Segment : public SegmentStorage::Segment {
     public:
-        Segment(Logger logger, const Configuration& configuration, const std::string& path, int64_t segmentNumber);
+        Segment(const Logger& logger, const Configuration& configuration, const std::string& path, int64_t segmentNumber);
         virtual ~Segment();
 
         virtual bool write(const void* data, size_t len) override;
@@ -48,7 +48,7 @@ private:
         };
 
         std::vector<Replica> _replicas;
-        std::chrono::microseconds _duration;
+        std::chrono::microseconds _duration{};
     };
 
     // Segments that haven't fully completed need to be kept alive so users aren't blocked when they

@@ -41,5 +41,5 @@ private:
     bool _isDestructing = false;
 
     void _run();
-    void _write(ArchiveDataType type, std::function<void(uint8_t*)> write, size_t len);
+    void _write(ArchiveDataType type, const std::function<void(uint8_t*)>& write, size_t len);
 };

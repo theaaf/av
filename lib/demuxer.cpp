@@ -11,7 +11,7 @@ extern "C" {
 #include <h26x/h264.hpp>
 #include <h26x/nal_unit.hpp>
 
-Demuxer::Demuxer(Logger logger, std::string in, EncodedAVHandler* handler) {
+Demuxer::Demuxer(const Logger& logger, const std::string& in, EncodedAVHandler* handler) {
     _thread = std::thread([=] {
         _run(logger, in, handler);
         _isDone = true;
@@ -22,7 +22,7 @@ Demuxer::~Demuxer() {
     _thread.join();
 }
 
-void Demuxer::_run(Logger logger, std::string in, EncodedAVHandler* handler) {
+void Demuxer::_run(Logger logger, const std::string& in, EncodedAVHandler* handler) {
     InitFFmpeg();
 
     AVFormatContext* formatContext = nullptr;
@@ -45,7 +45,7 @@ void Demuxer::_run(Logger logger, std::string in, EncodedAVHandler* handler) {
         return;
     }
 
-    AVPacket packet{0};
+    AVPacket packet{};
     av_init_packet(&packet);
     packet.data = nullptr;
     packet.size = 0;
@@ -151,7 +151,7 @@ void Demuxer::_run(Logger logger, std::string in, EncodedAVHandler* handler) {
             if (!didOutputAudioConfig) {
                 auto codec = stream->codecpar;
 
-                MPEG4AudioSpecificConfig config;
+                MPEG4AudioSpecificConfig config{};
 
                 switch (codec->profile) {
                 case FF_PROFILE_AAC_MAIN:

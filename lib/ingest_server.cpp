@@ -36,7 +36,8 @@ std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& 
             if (!result.requestError.empty()) {
                 logger.error("createAVStream request error: {}", result.requestError);
                 return nullptr;
-            } else if (!result.errors.empty()) {
+            }
+            if (!result.errors.empty()) {
                 for (auto& err : result.errors) {
                     logger.error("createAVStream error: {}", err.message);
                 }
@@ -52,7 +53,7 @@ std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& 
     return stream;
 }
 
-IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, std::string connectionId)
+IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, const std::string& connectionId)
     : _logger{logger}, _configuration{configuration}
 {
     if (configuration.archiveFileStorage) {
@@ -84,7 +85,7 @@ void IngestServer::Stream::addEncoding(size_t index, Configuration::Encoding con
         smConfig.storage.emplace_back(fs);
     }
     smConfig.platformAPI = _configuration.platformAPI;
-    smConfig.streamId = streamId;
+    smConfig.streamId = std::move(streamId);
 
     auto encoding = std::make_unique<Encoding>(_logger.with("encoding", index), smConfig, configuration.video);
     _segmentSplitter.addHandler(dynamic_cast<EncodedAudioHandler*>(encoding->packager.get()));

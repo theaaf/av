@@ -82,12 +82,13 @@ void H265VideoEncoder::_beginEncoding(int inputWidth, int inputHeight, AVPixelFo
 }
 
 void H265VideoEncoder::_handleEncodedPackets() {
-    AVPacket packet{0};
+    AVPacket packet{};
     while (true) {
         auto err = avcodec_receive_packet(_context, &packet);
         if (err == AVERROR(EAGAIN) || err == AVERROR_EOF) {
             break;
-        } else if (err < 0) {
+        }
+        if (err < 0) {
             _logger.error("error receiving video packets from encoder: {}", FFmpegErrorString(err));
             break;
         }

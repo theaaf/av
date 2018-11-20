@@ -150,8 +150,7 @@ std::vector<uint8_t> MPEG4AudioSpecificConfig::encode() const {
 }
 
 bool AVCDecoderConfigurationRecord::operator==(const AVCDecoderConfigurationRecord& other) const {
-    return true
-        && configurationVersion == other.configurationVersion
+    return configurationVersion == other.configurationVersion
         && avcProfileIndication == other.avcProfileIndication
         && profileCompatibility == other.profileCompatibility
         && avcLevelIndication == other.avcLevelIndication
@@ -236,8 +235,7 @@ std::vector<uint8_t> AVCDecoderConfigurationRecord::encode() const {
 }
 
 bool HEVCDecoderConfigurationRecord::operator==(const HEVCDecoderConfigurationRecord &other) const {
-    return true
-        && configurationVersion == other.configurationVersion
+    return configurationVersion == other.configurationVersion
         && general_profile_space == other.general_profile_space
         && general_tier_flag == other.general_tier_flag
         && general_profile_idc == other.general_profile_idc
@@ -579,7 +577,7 @@ h264::error HEVCDecoderConfigurationRecord::parseProfileTierLevel(h264::bitstrea
     std::bitset<HEVC_MAX_LAYERS> sub_layer_profile_present_flag{0};
     std::bitset<HEVC_MAX_LAYERS> sub_layer_level_present_flag{0};
 
-    HEVCProfileTierLevel ptl;
+    HEVCProfileTierLevel ptl{};
 
     if (!bs.read_bits(&ptl.profile_space, 2) ||
         !bs.read_bits(&ptl.tier_flag, 1) ||

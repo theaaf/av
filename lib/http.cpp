@@ -11,16 +11,16 @@
 #include "aws.hpp"
 
 struct AWSHTTPClient : HTTPClient {
-    virtual ~AWSHTTPClient() {}
-    virtual HTTPResult request(const HTTPRequest& request) override {
+
+    HTTPResult request(const HTTPRequest& request) override {
         InitAWS();
 
         HTTPResult result;
 
         Aws::Http::HttpMethod method;
-        if (request.method == "GET" || (request.method == "" && request.body == "")) {
+        if (request.method == "GET" || (request.method.empty() && request.body.empty())) {
             method = Aws::Http::HttpMethod::HTTP_GET;
-        } else if (request.method == "POST" || (request.method == "" && request.body != "")) {
+        } else if (request.method == "POST" || (request.method.empty() && request.body.empty())) {
             method = Aws::Http::HttpMethod::HTTP_POST;
         } else {
             result.error = "unsupported method";
@@ -30,13 +30,13 @@ struct AWSHTTPClient : HTTPClient {
         Aws::Client::ClientConfiguration awsClientConfig;
         auto awsClient = Aws::Http::CreateHttpClient(awsClientConfig);
 
-        auto awsReq = Aws::Http::CreateHttpRequest(Aws::String{request.url.c_str()}, method, Aws::Utils::Stream::DefaultResponseStreamFactoryMethod);
-        if (request.body != "") {
+        auto awsReq = Aws::Http::CreateHttpRequest(Aws::String{request.url}, method, Aws::Utils::Stream::DefaultResponseStreamFactoryMethod);
+        if (!request.body.empty()) {
             awsReq->AddContentBody(std::make_shared<std::stringstream>(request.body));
-            awsReq->SetContentLength(std::to_string(request.body.size()).c_str());
+            awsReq->SetContentLength(std::to_string(request.body.size()).c_str()); // NOLINT(readability-redundant-string-cstr)
         }
         for (auto& kv : request.headers) {
-            awsReq->SetHeaderValue(kv.first.c_str(), kv.second.c_str());
+            awsReq->SetHeaderValue(kv.first.c_str(), kv.second.c_str()); // NOLINT(readability-redundant-string-cstr)
         }
 
         auto awsResp = awsClient->MakeRequest(awsReq);

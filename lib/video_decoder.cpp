@@ -19,13 +19,15 @@ void VideoDecoder::handleEncodedVideoConfig(const void* data, size_t len) {
         _endDecoding();
         _videoConfig = nullptr;
         return;
-    } else if (_videoConfig && *config == *_videoConfig) {
+    }
+    if (_videoConfig && *config == *_videoConfig) {
         return;
     }
 
     _videoConfig = std::move(config);
 }
 
+// NOLINTNEXTLINE(misc-unused-parameters)
 void VideoDecoder::handleEncodedVideo(std::chrono::microseconds pts, std::chrono::microseconds dts, const void* data, size_t len) {
     if (!_videoConfig) {
         return;
@@ -81,7 +83,7 @@ void VideoDecoder::handleEncodedVideo(std::chrono::microseconds pts, std::chrono
 
     _inputBuffer.resize(_inputBuffer.size() + AV_INPUT_BUFFER_PADDING_SIZE);
 
-    AVPacket packet{0};
+    AVPacket packet{};
     av_init_packet(&packet);
     packet.data = _inputBuffer.data();
     packet.size = _inputBuffer.size() - AV_INPUT_BUFFER_PADDING_SIZE;
@@ -148,7 +150,8 @@ void VideoDecoder::_handleDecodedFrames() {
         auto err = avcodec_receive_frame(_context, frame);
         if (err == AVERROR(EAGAIN) || err == AVERROR_EOF) {
             break;
-        } else if (err < 0) {
+        }
+        if (err < 0) {
 		    _logger.error("error receiving video frames from decoder: {}", FFmpegErrorString(err));
             break;
         }

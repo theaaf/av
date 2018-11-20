@@ -56,7 +56,7 @@ protected:
     AVStream* _videoStream = nullptr;
     std::shared_ptr<SegmentStorage::Segment> _segment;
 
-    std::chrono::microseconds _segmentPTS;
+    std::chrono::microseconds _segmentPTS{};
     std::chrono::microseconds _maxVideoPTS = std::chrono::microseconds::min();
     std::chrono::microseconds _lastMaxVideoPTS = std::chrono::microseconds::zero();
 
