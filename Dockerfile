@@ -18,21 +18,23 @@ COPY .bazelrc build.bzl BUILD WORKSPACE ./
 COPY third-party third-party
 RUN bazel build @openssl//:libssl.a @ffmpeg//:libavformat.a @aws//:aws @clang_linux//:clang_check
 
-COPY . .
-
+COPY lib lib
 RUN bazel test //lib:test
 RUN bazel test //lib/h26x:test
 
-RUN bazel build archiver
+COPY ingest-server ingest-server
 RUN bazel build ingest-server
 
-RUN bazel run //analysis:clang-check
+COPY archiver archiver
+RUN bazel build archiver
+
+COPY analysis analysis
 RUN bazel run //analysis:clang-tidy
 
 FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
-        libcurl4-openssl-dev libxext6 libgl1-mesa-dev \
+        libcurl4-openssl-dev libxext6 libgl1-mesa-dev openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/av/bin
@@ -44,3 +46,8 @@ COPY --from=0 /tmp/av/bazel-bin/ingest-server/ingest-server .
 RUN /opt/av/bin/ingest-server --help > /dev/null
 
 ENV PATH "/opt/av/bin:$PATH"
+
+RUN useradd -m tunnel
+RUN mkdir /home/tunnel/.ssh
+COPY docker-entry-point.sh .
+ENTRYPOINT [ "docker-entry-point.sh" ]

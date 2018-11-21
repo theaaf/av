@@ -8,3 +8,4 @@
 !/third-party
 !/WORKSPACE
 !/analysis
+!docker-entry-point.sh
