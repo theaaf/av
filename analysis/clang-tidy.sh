@@ -10,7 +10,7 @@ cert-*,\
 performance-*,\
 readability-*,\
 misc-*,\
-portability-*
+portability-*,\
 
 DISABLE_CORE_CHECKS=\
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,\
@@ -18,15 +18,15 @@ DISABLE_CORE_CHECKS=\
 -cppcoreguidelines-pro-type-union-access,\
 -cppcoreguidelines-pro-bounds-constant-array-index,\
 -cppcoreguidelines-pro-bounds-array-to-pointer-decay,\
--cppcoreguidelines-owning-memory
+-cppcoreguidelines-owning-memory,\
 
 DISABLE_HI_CHECKS=\
 -hicpp-signed-bitwise,\
--hicpp-no-array-decay
+-hicpp-no-array-decay,\
 
 DISABLE_MISC_CHECKS=\
 -readability-implicit-bool-conversion,\
--modernize-redundant-void-arg
+-modernize-redundant-void-arg,\
 
 OS="`uname`"
 case $OS in
@@ -40,5 +40,5 @@ case $OS in
 esac
 echo 'Running clang-tidy...'
 find . -name '*.cpp' | xargs ./external/clang_*/bin/clang-tidy -p analysis/compile_commands.json \
-                            -checks=${ENABLE_CHECKS},${DISABLE_CORE_CHECKS},${DISABLE_HI_CHECKS},${DISABLE_MISC_CHECKS}
+                            -checks=${ENABLE_CHECKS}${DISABLE_CORE_CHECKS}${DISABLE_HI_CHECKS}${DISABLE_MISC_CHECKS}
 echo 'Finished clang-tidy'

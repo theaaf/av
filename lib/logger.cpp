@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <iomanip>
+#include <iostream>
 
 struct ConsoleLogDestination : Logger::Destination {
     void log(Logger::Severity severity, const std::string& message, const std::vector<Logger::Field>& fields) override {
@@ -29,6 +30,7 @@ struct ConsoleLogDestination : Logger::Destination {
         }
 
         fmt::print("[{}][{}]{} {}\n", severityString, std::put_time(&tm, "%F %T"), fieldsString, message);
+        std::cout << std::flush;
     }
 } gConsoleLogDestination;
 
