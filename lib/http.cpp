@@ -20,7 +20,7 @@ struct AWSHTTPClient : HTTPClient {
         Aws::Http::HttpMethod method;
         if (request.method == "GET" || (request.method.empty() && request.body.empty())) {
             method = Aws::Http::HttpMethod::HTTP_GET;
-        } else if (request.method == "POST" || (request.method.empty() && request.body.empty())) {
+        } else if (request.method == "POST" || (request.method.empty() && !request.body.empty())) {
             method = Aws::Http::HttpMethod::HTTP_POST;
         } else {
             result.error = "unsupported method";
