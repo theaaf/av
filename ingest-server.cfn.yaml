@@ -6,10 +6,11 @@ Parameters:
     Type: String
     Description: |
       Docker repository to pull image from.
+    Default: 366539177289.dkr.ecr.us-west-1.amazonaws.com/ingest-server
 
   IngestCommand:
     Type: String
-    Default: ingest-server
+    Default: ingest-server --archive-storage file:archive --segment-storage file:segments --encoding {"video":{"bitrate":4000000,"codec":"h264","height":720,"width":1280}}  --platform-access-token=4c41c5c99f3fafd558f89b2816d7090ed2f1e674 --gameId=GlEzeE9Es9Z7O69Gdq52MiWelWG4 --platform-url=https://api.platform.dev.aaf.cloud
     Description: |
       Command to run in the container.
 
@@ -25,6 +26,13 @@ Parameters:
     Type: String
     Description: |
       Contents of public key to use for accepting tunnel connections
+    Default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDD6lurgNuTI7ElfAfo558C1dV2K3XsGMEiHR+V41oU0yXBi/43r9fiuXWQDgv2tpElP8swhbLgWr+AjdaDNFHxBNdH7K1dR1z6BHTHihGcP1FvWsdjjkI948ShZ/cfmrW90CU/MFITF8ZsaFF+40o/mYKaXQCptFh9/Fu8aTa4hiscGKZ47wVTz5Ie9h6urzhA6uT0hXC6//TWfpNfA8OLFW6YlQ6bpdsAT9VzIbdQbAIH4dyls9AeeU+CnJPYfwj8cKKThr6Aa5tRv26gVWWnoDaDYeReBxc66wxmC3TOAkFmgzfChMSchBSjkQOEj/nTKJfK1GwExP3+V6v3R3p9lJXGCe0LMRdbQbvuAcTQue0o9kaaQc3GmdNWw5tlqRxW7FTun57MKpiuGMD05FQ3US+jYslgfJnodd757IGlX0ioT2ojipuLwC+bkSK4miMKwlSx/NE6oBQgRCr37ifLtO1igt9fXUfKYM3/3MJekWcn91saSlIxBF3ST3CnCBVkHaZTAlePhKGirH/Yha+RuAhK1WLyCrq+w6gdfgE6WGnshO2+k8EAUaCrKNTTD0ANTicgImmnaBcX78V4+1I00bUpOkzsz7tO1YjOY3qcrbvkQpK7UxMiGEs+slfQlj+8wAuQn93Ll0PAajk2GbkBCJZG4qwFxKwSOh7+JxZf1Q== pawel@Pawels-MacBook-Pro.local
+
+  PlatformEndpointServiceName:
+    Type: String
+    Description: |
+      Service Name for platform. If none is provided an endpoint is not created.
+    Default: com.amazonaws.vpce.us-east-1.vpce-svc-0a46fa157b78b183a
 
   SSHLocation:
     Type: String
@@ -37,6 +45,13 @@ Parameters:
       The narrower the better, but not strictly necessary.
       This would be the IP block of the venue where the connection in coming from.
 
+Conditions:
+  HasPlatformEndpoint:
+    Fn::Not:
+      - Fn::Equals:
+        - !Ref PlatformEndpointServiceName
+        - ''
+
 Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -46,6 +61,7 @@ Resources:
     Properties:
       CidrBlock: 192.168.0.0/16
       EnableDnsHostnames: true
+      EnableDnsSupport: true
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -55,6 +71,15 @@ Resources:
     Properties:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref VPC
+
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Condition: HasPlatformEndpoint
+    Properties:
+      Name: aaf.cloud.
+      VPCs:
+        - VPCId: !Ref VPC
+          VPCRegion: !Ref AWS::Region
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -108,6 +133,8 @@ Resources:
 
   LoadBalanceTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn:
+      - LoadBalancer
     Properties:
       HealthCheckIntervalSeconds: 10
       HealthCheckProtocol: TCP
@@ -125,6 +152,36 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 22
       Protocol: TCP
+
+  PlatformDevEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: HasPlatformEndpoint
+    Properties:
+      ServiceName: !Ref PlatformEndpointServiceName
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      VpcEndpointType: Interface
+      SecurityGroupIds:
+        - !Ref PlatformSecurityGroup
+
+  PlatformDevRecordSet:
+    Type: AWS::Route53::RecordSet
+    Condition: HasPlatformEndpoint
+    Properties:
+      HostedZoneId: !Ref HostedZone
+      Name: api.platform.dev.aaf.cloud
+      ResourceRecords:
+        - Fn::Select:
+          - 1
+          - Fn::Split:
+            - ':'
+            - Fn::Select:
+              - 0
+              - !GetAtt PlatformDevEndpoint.DnsEntries
+      Type: CNAME
+      TTL: 10
 
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -148,7 +205,7 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref InstanceSecurityGroup
+            - !Ref ServiceSecurityGroup
           Subnets:
             - !Ref PublicSubnet1
             - !Ref PublicSubnet2
@@ -193,10 +250,10 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-  InstanceSecurityGroup:
+  ServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable SSH access to IngestSecurePort
+      GroupDescription: Allow inbound SSH
       VpcId: !Ref VPC
       SecurityGroupIngress:
         -
@@ -204,3 +261,16 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: !Ref SSHLocation
+
+  PlatformSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: HasPlatformEndpoint
+    Properties:
+      GroupDescription: Allow local port 443 inbound
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        -
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref ServiceSecurityGroup

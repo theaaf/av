@@ -1,2 +1,2 @@
-build --cxxopt='-std=c++17' --verbose_failures
+build --cxxopt='-std=c++17' --verbose_failures --incompatible_remove_native_http_archive=false --incompatible_disable_legacy_cpp_toolchain_skylark_api
 test --verbose_failures --test_output=all --test_arg='--gtest_color=yes' --test_verbose_timeout_warnings
