@@ -110,8 +110,36 @@ int main(int argc, const char* argv[]) {
 
     std::unique_ptr<PlatformAPI> platformAPI;
     if (platformURL) {
+        if (!gameId) {
+            Logger{}.error("No gameId provided");
+            return 1;
+        }
         platformAPI = std::make_unique<PlatformAPI>(args::get(platformURL), args::get(platformAccessToken));
         configuration.platformAPI = platformAPI.get();
+
+        auto game = platformAPI->nodeTypename(args::get(gameId));
+        if (game.requestError.find("-1") != std::string::npos) {
+            Logger{}.error("Could not connect to platform (is URL correct?)");
+            return 1;
+        }
+        if (game.requestError.find("401") != std::string::npos) {
+            Logger{}.error("Platform access token is invalid");
+            return 1;
+        }
+        if (!game.requestError.empty()) {
+            Logger{}.error(game.requestError);
+            return 1;
+        }
+        if (game.errors.size() > 0) {
+            for (const auto& error : game.errors) {
+                Logger{}.error(error.message);
+            }
+            return 1;
+        }
+        if (!game.data.exists || game.data.type != "Game") {
+            Logger{}.error("Provided gameId does not exist on platform");
+            return 1;
+        }
     }
 
     IngestServer s{gLogger, configuration};

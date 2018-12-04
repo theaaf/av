@@ -58,6 +58,13 @@ public:
 
     Result<CreateAVStreamSegmentReplicaData> createAVStreamSegmentReplica(const AVStreamSegmentReplica& replica);
 
+    struct NodeTypenameData {
+        bool exists{false};
+        std::string type;
+    };
+
+    Result<NodeTypenameData> nodeTypename(const std::string& id);
+
 private:
     const std::string _url;
     const std::string _accessToken;

@@ -109,3 +109,28 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::
         out->id = in["createAVStreamSegmentReplica"]["id"].get<std::string>();
     });
 }
+
+PlatformAPI::Result<PlatformAPI::NodeTypenameData> PlatformAPI::nodeTypename(const std::string &id) {
+    auto query = R"query(
+        query TestExistence($nodeId: ID!) {
+            node (id: $nodeId) {
+                __typename
+            }
+        }
+    )query";
+
+    json body = {
+        {"operationName", "TestExistence"},
+        {"query", query},
+        {"variables", {
+              {"nodeId", id}
+        }}
+    };
+
+    return _doGraphQL<NodeTypenameData>(body, [](json& resp, NodeTypenameData* out) {
+        if (!resp["node"].is_null()) {
+            out->exists = true;
+            out->type = resp["node"]["__typename"].get<std::string>();
+        }
+    });
+};
