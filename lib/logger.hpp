@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include <unistd.h>
+
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -23,7 +25,14 @@ public:
         virtual void log(Severity severity, const std::string& message, const std::vector<Field>& fields) = 0;
     };
 
-    Logger() = default;
+    Logger() {
+        if (isatty(STDOUT_FILENO)) {
+            _destination = Console;
+        } else {
+            _destination = Json;
+        }
+    }
+
     Logger(Destination* destination) : _destination{destination} {}
 
     template <typename... Args>
@@ -51,6 +60,7 @@ public:
     }
 
     static Destination* const Console;
+    static Destination* const Json;
     static Destination* const Void;
 
 private:
