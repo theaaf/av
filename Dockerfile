@@ -29,7 +29,7 @@ COPY archiver archiver
 RUN bazel build archiver
 
 COPY analysis analysis
-# RUN bazel run //analysis:clang-tidy
+RUN bazel run //analysis:clang-tidy
 
 FROM ubuntu:18.04
 
