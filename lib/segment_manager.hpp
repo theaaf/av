@@ -24,6 +24,8 @@ public:
 
     virtual std::shared_ptr<SegmentStorage::Segment> createSegment(const std::string& extension) override;
 
+    const Configuration& configuration() const { return _configuration; }
+
 private:
     const Logger _logger;
     std::mutex _mutex;

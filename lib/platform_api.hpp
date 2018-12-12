@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,6 +35,7 @@ public:
         int videoWidth = 0;
         int bitrate = 0;
         std::string gameId;
+        bool isLive = false;
     };
 
     struct CreateAVStreamData {
@@ -41,6 +43,14 @@ public:
     };
 
     Result<CreateAVStreamData> createAVStream(const AVStream& stream);
+
+    struct AVStreamPatch {
+        std::optional<bool> isLive;
+    };
+
+    struct PatchAVStreamData {};
+
+    Result<PatchAVStreamData> patchAVStreamById(const std::string& id, const AVStreamPatch& patch);
 
     struct AVStreamSegmentReplica {
         std::string streamId;

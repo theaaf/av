@@ -42,7 +42,7 @@ PlatformAPI::Result<T> PlatformAPI::_doGraphQL(const json& body, std::function<v
 
 PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream(const PlatformAPI::AVStream& stream) {
     auto query = R"query(
-      mutation CreateAVStream($gameId: ID!, $codecs: [String]!, $bitrate: Int!, $videoWidth: Int!, $videoHeight: Int!, $maximumSegmentDurationMilliseconds: Int!) {
+      mutation CreateAVStream($gameId: ID!, $codecs: [String]!, $bitrate: Int!, $videoWidth: Int!, $videoHeight: Int!, $maximumSegmentDurationMilliseconds: Int!, $isLive: Boolean!) {
         createAVStream(
           stream: {
             gameId: $gameId,
@@ -51,6 +51,7 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
             videoWidth: $videoWidth,
             videoHeight: $videoHeight,
             maximumSegmentDurationMilliseconds: $maximumSegmentDurationMilliseconds,
+            isLive: $isLive,
           },
         ) {
           id
@@ -68,12 +69,42 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
             {"videoHeight", stream.videoHeight},
             {"gameId", stream.gameId},
             {"maximumSegmentDurationMilliseconds", std::chrono::milliseconds(stream.maximumSegmentDuration).count()},
+            {"isLive", stream.isLive},
         }},
     };
 
     return _doGraphQL<CreateAVStreamData>(body, [](json& in, CreateAVStreamData* out) {
         out->id = in["createAVStream"]["id"].get<std::string>();
     });
+}
+
+PlatformAPI::Result<PlatformAPI::PatchAVStreamData> PlatformAPI::patchAVStreamById(const std::string& id, const PlatformAPI::AVStreamPatch& patch) {
+    auto query = R"query(
+      mutation PatchAVStream($id: ID!, $patch: AVStreamPatch!) {
+        patchAVStream(
+          id: $id,
+          patch: $patch,
+        ) {
+          id
+        }
+      }
+    )query";
+
+    json::object_t patchObj;
+    if (patch.isLive) {
+        patchObj["isLive"] = *patch.isLive;
+    }
+
+    json body = {
+        {"operationName", "PatchAVStream"},
+        {"query", query},
+        {"variables", {
+            {"id", id},
+            {"patch", patchObj},
+        }},
+    };
+
+    return _doGraphQL<PatchAVStreamData>(body, [](json& in, PatchAVStreamData* out) {});
 }
 
 PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::createAVStreamSegmentReplica(const PlatformAPI::AVStreamSegmentReplica& replica) {

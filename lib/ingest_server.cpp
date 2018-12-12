@@ -31,6 +31,7 @@ std::shared_ptr<EncodedAVHandler> IngestServer::authenticate(const std::string& 
             stream.videoHeight = encoding.video.height;
             stream.videoWidth = encoding.video.width;
             stream.gameId = _configuration.gameId;
+            stream.isLive = true;
 
             auto result = _configuration.platformAPI->createAVStream(stream);
             if (!result.requestError.empty()) {
@@ -76,6 +77,25 @@ IngestServer::Stream::Stream(Logger logger, const Configuration& configuration, 
             }
         });
         addHandler(_segmenter.get());
+    }
+}
+
+IngestServer::Stream::~Stream() {
+    PlatformAPI::AVStreamPatch patch;
+    patch.isLive = false;
+
+    for (auto& encoding : _encodings) {
+        if (auto streamId = encoding->segmentManager.configuration().streamId; !streamId.empty()) {
+            auto result = _configuration.platformAPI->patchAVStreamById(streamId, patch);
+            if (!result.requestError.empty()) {
+                _logger.error("patchAVStream request error: {}", result.requestError);
+            }
+            if (!result.errors.empty()) {
+                for (auto& err : result.errors) {
+                    _logger.error("patchAVStream error: {}", err.message);
+                }
+            }
+        }
     }
 }
 
