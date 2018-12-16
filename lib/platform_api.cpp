@@ -80,7 +80,7 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamData> PlatformAPI::createAVStream
 
 PlatformAPI::Result<PlatformAPI::PatchAVStreamData> PlatformAPI::patchAVStreamById(const std::string& id, const PlatformAPI::AVStreamPatch& patch) {
     auto query = R"query(
-      mutation PatchAVStream($id: ID!, $patch: AVStreamPatch!) {
+      mutation PatchAVStream($id: ID!, $patch: AVStreamPatchInput!) {
         patchAVStream(
           id: $id,
           patch: $patch,
