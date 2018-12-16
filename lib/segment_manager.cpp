@@ -37,6 +37,9 @@ SegmentManager::Segment::Segment(const Logger& logger, const SegmentManager::Con
                 logger = logger.with("url", url),
                 configuration
         ]{
+            PlatformAPI::AVStreamSegmentReplica replica;
+            replica.time = std::chrono::system_clock::now();
+
             file->wait();
             if (!file->isHealthy()) {
                 logger.error("error writing segment replica");
@@ -44,7 +47,6 @@ SegmentManager::Segment::Segment(const Logger& logger, const SegmentManager::Con
             }
 
             if (configuration.platformAPI) {
-                PlatformAPI::AVStreamSegmentReplica replica;
                 replica.streamId = configuration.streamId;
                 replica.segmentNumber = segmentNumber;
                 replica.url = url;

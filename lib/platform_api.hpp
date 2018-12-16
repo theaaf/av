@@ -57,7 +57,7 @@ public:
         int64_t segmentNumber = 0;
         std::string url;
         std::chrono::milliseconds duration;
-        std::chrono::system_clock::time_point startTime;
+        std::chrono::system_clock::time_point time;
         std::string gameId;
         bool discontinuity = false;
     };

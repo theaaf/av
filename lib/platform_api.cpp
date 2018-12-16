@@ -109,7 +109,7 @@ PlatformAPI::Result<PlatformAPI::PatchAVStreamData> PlatformAPI::patchAVStreamBy
 
 PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::createAVStreamSegmentReplica(const PlatformAPI::AVStreamSegmentReplica& replica) {
     auto query = R"query(
-      mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $url: String!, $durationMilliseconds: Int!, $discontinuity: Boolean) {
+      mutation CreateAVStreamSegmentReplica($streamId: ID!, $segmentNumber: Int!, $url: String!, $durationMilliseconds: Int!, $discontinuity: Boolean, $time: DateTime!) {
         createAVStreamSegmentReplica(
           replica: {
             streamId: $streamId,
@@ -117,12 +117,20 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::
             url: $url,
             durationMilliseconds: $durationMilliseconds,
             discontinuity: $discontinuity,
+            time: $time,
           },
         ) {
           id
         }
       }
     )query";
+
+    auto timeT = std::chrono::system_clock::to_time_t(replica.time);
+    struct tm tm{};
+    gmtime_r(&timeT, &tm);
+
+    std::stringstream timeString;
+    timeString << std::put_time(&tm, "%FT%TZ");
 
     json body = {
         {"operationName", "CreateAVStreamSegmentReplica"},
@@ -133,6 +141,7 @@ PlatformAPI::Result<PlatformAPI::CreateAVStreamSegmentReplicaData> PlatformAPI::
             {"url", replica.url},
             {"durationMilliseconds", std::chrono::milliseconds(replica.duration).count()},
             {"discontinuity", replica.discontinuity},
+            {"time", timeString.str()},
         }},
     };
 
