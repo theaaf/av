@@ -4,12 +4,14 @@
 #include <vector>
 #include <h26x/nal_unit.hpp>
 
+// https://en.wikipedia.org/wiki/MPEG-4_Part_3
 enum class MPEG4AudioObjectType {
     Null = 0,
     AACMain = 1,
     AACLC = 2,
     AACSSR = 3,
     AACLTP = 4,
+    SBR = 5,
     AACScalable = 6,
     Escape = 31,
 };

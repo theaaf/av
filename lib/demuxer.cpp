@@ -166,6 +166,9 @@ void Demuxer::_run(Logger logger, const std::string& in, EncodedAVHandler* handl
                 case FF_PROFILE_AAC_LTP:
                     config.objectType = MPEG4AudioObjectType::AACLTP;
                     break;
+                case FF_PROFILE_AAC_HE:
+                    config.objectType = MPEG4AudioObjectType::SBR;
+                    break;
                 default:
                     logger.error("unsupported aac profile: {}", codec->profile);
                     return;

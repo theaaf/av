@@ -17,6 +17,7 @@ namespace ProfileIDC {
 
 namespace NALUnitType {
     constexpr unsigned int IDRSlice = 5;
+    constexpr unsigned int SEI = 6;
     constexpr unsigned int SequenceParameterSet = 7;
     constexpr unsigned int PictureParameterSet = 8;
     constexpr unsigned int AccessUnitDelimiter = 9;

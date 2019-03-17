@@ -80,6 +80,15 @@ public:
         return _bit_count - _bit_offset;
     }
 
+    bool more_rbsp_data() const {
+        if (!bits_remaining()) {
+            return false;
+        } else if (bits_remaining() > 8) {
+            return true;
+        }
+        return next_bits(bits_remaining()) != (1 << (bits_remaining() - 1));
+    }
+
 private:
     const uint8_t* _data;
     size_t _bit_count;
