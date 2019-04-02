@@ -18,7 +18,7 @@ http_archive(
 
 http_archive(
     name = "rtmpdump",
-    urls = ["https://github.aaf.cloud/av/rtmpdump/archive/5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f.tar.gz"],
+    urls = ["https://github.com/theaaf/rtmpdump/archive/5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f.tar.gz"],
     sha256 = "29e8e76e8629f8dbd80b41c7042e35124d8255125df0dfb597e21563eec578bd",
     strip_prefix = "rtmpdump-5a8cb962157aa5c7ecd5dbfda9d1a62c4f3e4e8f",
     build_file_content = """
